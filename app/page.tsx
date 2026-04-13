@@ -65,7 +65,7 @@ interface Spot {
   img: string; desc: string; access: string; bottom: string;
 }
 interface Profile {
-  level: number | null; board: string; stance: string;
+  level: number | null; boards: string[]; stance: string;
   crowdPref: number | null; reefComfort: number | null;
 }
 interface ScoreResult { score: number; reasons: string[]; warnings: string[]; boardTip: string; }
@@ -135,10 +135,24 @@ function scoreSpot(spot: Spot, profile: Profile, forecast: ForecastData): ScoreR
   const pct = Math.max(0, Math.min(100, Math.round(score * 100 / 105)));
 
   let boardTip = "";
+  const boards = profile.boards ?? [];
+  const hasLong = boards.some(b => b.includes("Longboard") || b.includes("Foam") || b.includes("Funboard"));
+  const hasShort = boards.some(b => b.includes("Shortboard") || b.includes("Fish") || b.includes("Gun"));
+
   if (level === 1) boardTip = "Stick to your biggest, most buoyant board for maximum wave count.";
-  else if (forecast.swellHeight > 1.5 && spot.type === "Reef break") boardTip = "Conditions are solid — your shortboard or fish will work. Consider reef booties.";
-  else if (forecast.swellHeight <= 1.0) boardTip = "Small day vibes — grab a longboard or funboard to maximize fun.";
-  else boardTip = "Your go-to board should work great here today.";
+  else if (forecast.swellHeight > 1.5 && spot.type === "Reef break") {
+    boardTip = hasShort
+      ? "Solid conditions — grab your shortboard or fish. Consider reef booties."
+      : "Solid conditions — your mid-length will work great here.";
+  } else if (forecast.swellHeight <= 1.0) {
+    boardTip = hasLong
+      ? "Small day — perfect for your longboard or funboard to maximize fun."
+      : "Small day vibes — a fish or mid-length will help you catch more waves.";
+  } else {
+    boardTip = boards.length > 1
+      ? `From your quiver, ${forecast.swellHeight > 1.2 ? (hasShort ? "your shortboard or fish" : "your mid-length") : (hasLong ? "your longboard or funboard" : "your fish")} is the call today.`
+      : "Your go-to board should work great here today.";
+  }
 
   return { score: pct, reasons: reasons.slice(0, 4), warnings, boardTip };
 }
@@ -195,7 +209,7 @@ function DangerBadge({ level }: { level: number }) {
 // ============================================================
 export default function SwellAI() {
   const [step, setStep] = useState(0);
-  const [profile, setProfile] = useState<Profile>({ level: null, board: "", stance: "", crowdPref: null, reefComfort: null });
+  const [profile, setProfile] = useState<Profile>({ level: null, boards: [], stance: "", crowdPref: null, reefComfort: null });
   const [results, setResults] = useState<ScoredSpot[] | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [zoneFilter, setZoneFilter] = useState("All Bali");
@@ -235,7 +249,7 @@ export default function SwellAI() {
       if (data) {
         setProfile({
           level: data.level,
-          board: data.board,
+          boards: data.boards ?? [],
           stance: data.stance,
           crowdPref: data.crowd_pref,
           reefComfort: data.reef_comfort,
@@ -271,7 +285,7 @@ export default function SwellAI() {
       await supabase.from("profiles").upsert({
         id: user.id,
         level: profile.level,
-        board: profile.board,
+        boards: profile.boards,
         stance: profile.stance,
         crowd_pref: profile.crowdPref,
         reef_comfort: profile.reefComfort,
@@ -426,17 +440,33 @@ export default function SwellAI() {
               ))}
             </div>
 
-            <Label>YOUR BOARD</Label>
+            <Label>YOUR QUIVER <span style={{ color: "#4a6a7a", fontWeight: 400 }}>(select all you have)</span></Label>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 32 }}>
-              {BOARDS.map(b => <Pill key={b} selected={profile.board === b} onClick={() => setProfile(p => ({ ...p, board: b }))}>{b}</Pill>)}
+              {BOARDS.map(b => (
+                <Pill key={b}
+                  selected={profile.boards.includes(b)}
+                  onClick={() => setProfile(p => ({
+                    ...p,
+                    boards: p.boards.includes(b)
+                      ? p.boards.filter(x => x !== b)
+                      : [...p.boards, b]
+                  }))}>
+                  {profile.boards.includes(b) ? "✓ " : ""}{b}
+                </Pill>
+              ))}
             </div>
+            {profile.boards.length > 0 && (
+              <div style={{ fontSize: 11, color: "#00d2b4", marginBottom: 16, marginTop: -20 }}>
+                {profile.boards.length} board{profile.boards.length > 1 ? "s" : ""} selected
+              </div>
+            )}
 
             <Label>STANCE</Label>
             <div style={{ display: "flex", gap: 8, marginBottom: 32 }}>
               {STANCES.map(s => <Pill key={s} selected={profile.stance === s} onClick={() => setProfile(p => ({ ...p, stance: s }))}>{s}</Pill>)}
             </div>
 
-            <button onClick={() => go(2)} disabled={!profile.level || !profile.board || !profile.stance} style={{ width: "100%", padding: "17px 24px", fontSize: 16, fontWeight: 700, background: (profile.level && profile.board && profile.stance) ? "linear-gradient(135deg, #00d2b4, #00a896)" : "rgba(255,255,255,0.06)", color: (profile.level && profile.board && profile.stance) ? "#060f1a" : "#3a5a6a", border: "none", borderRadius: 14, cursor: (profile.level && profile.board && profile.stance) ? "pointer" : "default", transition: "all 0.3s" }}>
+            <button onClick={() => go(2)} disabled={!profile.level || profile.boards.length === 0 || !profile.stance} style={{ width: "100%", padding: "17px 24px", fontSize: 16, fontWeight: 700, background: (profile.level && profile.boards.length > 0 && profile.stance) ? "linear-gradient(135deg, #00d2b4, #00a896)" : "rgba(255,255,255,0.06)", color: (profile.level && profile.boards.length > 0 && profile.stance) ? "#060f1a" : "#3a5a6a", border: "none", borderRadius: 14, cursor: (profile.level && profile.boards.length > 0 && profile.stance) ? "pointer" : "default", transition: "all 0.3s" }}>
               Next — Preferences →
             </button>
           </div>
