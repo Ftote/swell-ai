@@ -1,35 +1,37 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase";
+import Map, { Marker, Popup } from "react-map-gl/mapbox";
+import "mapbox-gl/dist/mapbox-gl.css";
 
 // ============================================================
 // SPOTS + SCORING (shared logic)
 // ============================================================
 const SPOTS = [
-  { id: "uluwatu", name: "Uluwatu", zone: "Bukit", type: "Reef break", direction: "Left", level: 3, maxSwell: 3.5, minSwell: 0.8, idealWind: "SE", idealSwellDir: "S", tideReq: "mid-high", danger: 4, crowd: 5, img: "⚡", desc: "World-class left, long barrels on the reef. Cave entry.", access: "Steep stairs through cave", bottom: "Sharp reef" },
-  { id: "padang", name: "Padang Padang", zone: "Bukit", type: "Reef break", direction: "Left", level: 3, maxSwell: 3.0, minSwell: 1.2, idealWind: "SE", idealSwellDir: "SW", tideReq: "mid-low", danger: 5, crowd: 4, img: "💀", desc: "Heavy barrels over shallow reef. Only fires on solid swell.", access: "Rock squeeze entry", bottom: "Very shallow reef" },
-  { id: "bingin", name: "Bingin", zone: "Bukit", type: "Reef break", direction: "Left", level: 2, maxSwell: 2.0, minSwell: 0.6, idealWind: "SE", idealSwellDir: "S", tideReq: "mid-high", danger: 3, crowd: 4, img: "✨", desc: "Fun left barrel, shorter ride. Great for improving intermediates.", access: "Long stairs down cliff", bottom: "Reef (boots recommended)" },
-  { id: "dreamland", name: "Dreamland", zone: "Bukit", type: "Beach break", direction: "Both", level: 1, maxSwell: 2.0, minSwell: 0.5, idealWind: "SE", idealSwellDir: "SW", tideReq: "all", danger: 2, crowd: 3, img: "🏖️", desc: "Sandy beach break, fun peaks. Tourist-friendly.", access: "Easy beach access", bottom: "Sand" },
-  { id: "balangan", name: "Balangan", zone: "Bukit", type: "Reef break", direction: "Left", level: 2, maxSwell: 2.5, minSwell: 0.5, idealWind: "SE", idealSwellDir: "S", tideReq: "mid-high", danger: 3, crowd: 3, img: "🌅", desc: "Beautiful left with barrel sections. Mellow vibe.", access: "Cliff stairs", bottom: "Reef with sand patches" },
-  { id: "impossibles", name: "Impossibles", zone: "Bukit", type: "Reef break", direction: "Left", level: 3, maxSwell: 3.0, minSwell: 1.0, idealWind: "SE", idealSwellDir: "S", tideReq: "mid", danger: 4, crowd: 3, img: "🔥", desc: "3 connecting sections, super long rides when it links up.", access: "Cliff descent or paddle from Bingin", bottom: "Sharp reef" },
-  { id: "batu-bolong", name: "Batu Bolong", zone: "Canggu", type: "Beach break", direction: "Both", level: 1, maxSwell: 1.8, minSwell: 0.3, idealWind: "SE", idealSwellDir: "SW", tideReq: "mid-high", danger: 1, crowd: 5, img: "🌴", desc: "The social hub. Mellow waves, perfect for longboarding & beginners.", access: "Easy beach", bottom: "Sand with some rocks" },
-  { id: "oldmans", name: "Old Man's", zone: "Canggu", type: "Beach break", direction: "Both", level: 1, maxSwell: 1.5, minSwell: 0.3, idealWind: "SE", idealSwellDir: "SW", tideReq: "mid-high", danger: 1, crowd: 5, img: "☀️", desc: "Super mellow, long crumbly waves. Beginner paradise.", access: "Easy beach", bottom: "Sand" },
-  { id: "berawa", name: "Berawa", zone: "Canggu", type: "Beach break", direction: "Both", level: 1, maxSwell: 2.0, minSwell: 0.3, idealWind: "SE", idealSwellDir: "SW", tideReq: "all", danger: 1, crowd: 4, img: "🌊", desc: "Consistent beach break, good for all levels. Can get punchy.", access: "Easy beach", bottom: "Sand" },
-  { id: "echo-beach", name: "Echo Beach", zone: "Canggu", type: "Reef break", direction: "Left", level: 2, maxSwell: 2.5, minSwell: 0.5, idealWind: "SE", idealSwellDir: "S", tideReq: "mid-high", danger: 3, crowd: 4, img: "💪", desc: "Powerful left on the reef. Step up from Batu Bolong.", access: "Beach with rocky entry", bottom: "Reef" },
-  { id: "kuta-beach", name: "Kuta Beach", zone: "Kuta", type: "Beach break", direction: "Both", level: 1, maxSwell: 1.5, minSwell: 0.2, idealWind: "SE", idealSwellDir: "SW", tideReq: "all", danger: 1, crowd: 5, img: "🏄", desc: "Where everyone learns to surf in Bali. Gentle whitewash.", access: "Easy beach", bottom: "Sand" },
-  { id: "seminyak", name: "Seminyak Beach", zone: "Seminyak", type: "Beach break", direction: "Both", level: 1, maxSwell: 1.8, minSwell: 0.3, idealWind: "SE", idealSwellDir: "SW", tideReq: "all", danger: 1, crowd: 3, img: "🍹", desc: "Less crowded alternative to Kuta. Decent peaks.", access: "Easy beach", bottom: "Sand" },
-  { id: "keramas", name: "Keramas", zone: "East Coast", type: "Reef break", direction: "Right", level: 3, maxSwell: 2.5, minSwell: 0.8, idealWind: "NW", idealSwellDir: "SE", tideReq: "mid-high", danger: 4, crowd: 2, img: "🌙", desc: "World-class right. Amazing for night surfing (lit). Fast & hollow.", access: "Easy beach entry", bottom: "Reef" },
-  { id: "sanur", name: "Sanur Reef", zone: "East Coast", type: "Reef break", direction: "Right", level: 2, maxSwell: 2.0, minSwell: 0.5, idealWind: "W", idealSwellDir: "SE", tideReq: "mid-high", danger: 2, crowd: 2, img: "🐢", desc: "Mellow right on the reef. Boat access. Chill crowd.", access: "Boat from beach", bottom: "Reef (mellow)" },
-  { id: "ketewel", name: "Ketewel", zone: "East Coast", type: "Beach break", direction: "Both", level: 2, maxSwell: 2.0, minSwell: 0.5, idealWind: "NW", idealSwellDir: "SE", tideReq: "all", danger: 2, crowd: 1, img: "🌿", desc: "Uncrowded black sand beach. Fun peaks when east swell hits.", access: "Easy beach", bottom: "Sand (volcanic)" },
-  { id: "shipwrecks", name: "Shipwrecks", zone: "Nusa Lembongan", type: "Reef break", direction: "Right", level: 2, maxSwell: 2.5, minSwell: 0.5, idealWind: "SE", idealSwellDir: "S", tideReq: "mid-high", danger: 3, crowd: 2, img: "🚢", desc: "Long right-hander over reef. Boat or paddle access.", access: "Boat from Lembongan", bottom: "Reef" },
-  { id: "playgrounds", name: "Playgrounds", zone: "Nusa Lembongan", type: "Reef break", direction: "Both", level: 2, maxSwell: 2.0, minSwell: 0.5, idealWind: "SE", idealSwellDir: "S", tideReq: "mid-high", danger: 2, crowd: 2, img: "🎪", desc: "Fun left & right options. Mellow reef. Great for intermediates.", access: "Boat or paddle", bottom: "Reef (friendly)" },
-  { id: "sri-lanka", name: "Sri Lanka", zone: "Nusa Dua", type: "Reef break", direction: "Left/Right", level: 2, maxSwell: 2.5, minSwell: 0.5, idealWind: "NE", idealSwellDir: "S", tideReq: "mid-high", danger: 3, crowd: 2, img: "🏝️", desc: "Quality reef break in front of resorts. A-frame peaks.", access: "Paddle from beach", bottom: "Reef" },
+  { id: "uluwatu", name: "Uluwatu", zone: "Bukit", type: "Reef break", direction: "Left", level: 3, maxSwell: 3.5, minSwell: 0.8, idealWind: "SE", idealSwellDir: "S", tideReq: "mid-high", danger: 4, crowd: 5, img: "⚡", desc: "World-class left, long barrels on the reef. Cave entry.", access: "Steep stairs through cave", bottom: "Sharp reef", lat: -8.8293, lng: 115.0849 },
+  { id: "padang", name: "Padang Padang", zone: "Bukit", type: "Reef break", direction: "Left", level: 3, maxSwell: 3.0, minSwell: 1.2, idealWind: "SE", idealSwellDir: "SW", tideReq: "mid-low", danger: 5, crowd: 4, img: "💀", desc: "Heavy barrels over shallow reef. Only fires on solid swell.", access: "Rock squeeze entry", bottom: "Very shallow reef", lat: -8.8121, lng: 115.0890 },
+  { id: "bingin", name: "Bingin", zone: "Bukit", type: "Reef break", direction: "Left", level: 2, maxSwell: 2.0, minSwell: 0.6, idealWind: "SE", idealSwellDir: "S", tideReq: "mid-high", danger: 3, crowd: 4, img: "✨", desc: "Fun left barrel, shorter ride. Great for improving intermediates.", access: "Long stairs down cliff", bottom: "Reef (boots recommended)", lat: -8.8183, lng: 115.0897 },
+  { id: "dreamland", name: "Dreamland", zone: "Bukit", type: "Beach break", direction: "Both", level: 1, maxSwell: 2.0, minSwell: 0.5, idealWind: "SE", idealSwellDir: "SW", tideReq: "all", danger: 2, crowd: 3, img: "🏖️", desc: "Sandy beach break, fun peaks. Tourist-friendly.", access: "Easy beach access", bottom: "Sand", lat: -8.8013, lng: 115.0990 },
+  { id: "balangan", name: "Balangan", zone: "Bukit", type: "Reef break", direction: "Left", level: 2, maxSwell: 2.5, minSwell: 0.5, idealWind: "SE", idealSwellDir: "S", tideReq: "mid-high", danger: 3, crowd: 3, img: "🌅", desc: "Beautiful left with barrel sections. Mellow vibe.", access: "Cliff stairs", bottom: "Reef with sand patches", lat: -8.7925, lng: 115.1031 },
+  { id: "impossibles", name: "Impossibles", zone: "Bukit", type: "Reef break", direction: "Left", level: 3, maxSwell: 3.0, minSwell: 1.0, idealWind: "SE", idealSwellDir: "S", tideReq: "mid", danger: 4, crowd: 3, img: "🔥", desc: "3 connecting sections, super long rides when it links up.", access: "Cliff descent or paddle from Bingin", bottom: "Sharp reef", lat: -8.8109, lng: 115.0893 },
+  { id: "batu-bolong", name: "Batu Bolong", zone: "Canggu", type: "Beach break", direction: "Both", level: 1, maxSwell: 1.8, minSwell: 0.3, idealWind: "SE", idealSwellDir: "SW", tideReq: "mid-high", danger: 1, crowd: 5, img: "🌴", desc: "The social hub. Mellow waves, perfect for longboarding & beginners.", access: "Easy beach", bottom: "Sand with some rocks", lat: -8.6483, lng: 115.1393 },
+  { id: "oldmans", name: "Old Man's", zone: "Canggu", type: "Beach break", direction: "Both", level: 1, maxSwell: 1.5, minSwell: 0.3, idealWind: "SE", idealSwellDir: "SW", tideReq: "mid-high", danger: 1, crowd: 5, img: "☀️", desc: "Super mellow, long crumbly waves. Beginner paradise.", access: "Easy beach", bottom: "Sand", lat: -8.6503, lng: 115.1378 },
+  { id: "berawa", name: "Berawa", zone: "Canggu", type: "Beach break", direction: "Both", level: 1, maxSwell: 2.0, minSwell: 0.3, idealWind: "SE", idealSwellDir: "SW", tideReq: "all", danger: 1, crowd: 4, img: "🌊", desc: "Consistent beach break, good for all levels. Can get punchy.", access: "Easy beach", bottom: "Sand", lat: -8.6426, lng: 115.1481 },
+  { id: "echo-beach", name: "Echo Beach", zone: "Canggu", type: "Reef break", direction: "Left", level: 2, maxSwell: 2.5, minSwell: 0.5, idealWind: "SE", idealSwellDir: "S", tideReq: "mid-high", danger: 3, crowd: 4, img: "💪", desc: "Powerful left on the reef. Step up from Batu Bolong.", access: "Beach with rocky entry", bottom: "Reef", lat: -8.6397, lng: 115.1548 },
+  { id: "kuta-beach", name: "Kuta Beach", zone: "Kuta", type: "Beach break", direction: "Both", level: 1, maxSwell: 1.5, minSwell: 0.2, idealWind: "SE", idealSwellDir: "SW", tideReq: "all", danger: 1, crowd: 5, img: "🏄", desc: "Where everyone learns to surf in Bali. Gentle whitewash.", access: "Easy beach", bottom: "Sand", lat: -8.7184, lng: 115.1686 },
+  { id: "seminyak", name: "Seminyak Beach", zone: "Seminyak", type: "Beach break", direction: "Both", level: 1, maxSwell: 1.8, minSwell: 0.3, idealWind: "SE", idealSwellDir: "SW", tideReq: "all", danger: 1, crowd: 3, img: "🍹", desc: "Less crowded alternative to Kuta. Decent peaks.", access: "Easy beach", bottom: "Sand", lat: -8.6906, lng: 115.1627 },
+  { id: "keramas", name: "Keramas", zone: "East Coast", type: "Reef break", direction: "Right", level: 3, maxSwell: 2.5, minSwell: 0.8, idealWind: "NW", idealSwellDir: "SE", tideReq: "mid-high", danger: 4, crowd: 2, img: "🌙", desc: "World-class right. Amazing for night surfing (lit). Fast & hollow.", access: "Easy beach entry", bottom: "Reef", lat: -8.5800, lng: 115.3042 },
+  { id: "sanur", name: "Sanur Reef", zone: "East Coast", type: "Reef break", direction: "Right", level: 2, maxSwell: 2.0, minSwell: 0.5, idealWind: "W", idealSwellDir: "SE", tideReq: "mid-high", danger: 2, crowd: 2, img: "🐢", desc: "Mellow right on the reef. Boat access. Chill crowd.", access: "Boat from beach", bottom: "Reef (mellow)", lat: -8.7060, lng: 115.2617 },
+  { id: "ketewel", name: "Ketewel", zone: "East Coast", type: "Beach break", direction: "Both", level: 2, maxSwell: 2.0, minSwell: 0.5, idealWind: "NW", idealSwellDir: "SE", tideReq: "all", danger: 2, crowd: 1, img: "🌿", desc: "Uncrowded black sand beach. Fun peaks when east swell hits.", access: "Easy beach", bottom: "Sand (volcanic)", lat: -8.5769, lng: 115.3139 },
+  { id: "shipwrecks", name: "Shipwrecks", zone: "Nusa Lembongan", type: "Reef break", direction: "Right", level: 2, maxSwell: 2.5, minSwell: 0.5, idealWind: "SE", idealSwellDir: "S", tideReq: "mid-high", danger: 3, crowd: 2, img: "🚢", desc: "Long right-hander over reef. Boat or paddle access.", access: "Boat from Lembongan", bottom: "Reef", lat: -8.6839, lng: 115.4503 },
+  { id: "playgrounds", name: "Playgrounds", zone: "Nusa Lembongan", type: "Reef break", direction: "Both", level: 2, maxSwell: 2.0, minSwell: 0.5, idealWind: "SE", idealSwellDir: "S", tideReq: "mid-high", danger: 2, crowd: 2, img: "🎪", desc: "Fun left & right options. Mellow reef. Great for intermediates.", access: "Boat or paddle", bottom: "Reef (friendly)", lat: -8.6811, lng: 115.4547 },
+  { id: "sri-lanka", name: "Sri Lanka", zone: "Nusa Dua", type: "Reef break", direction: "Left/Right", level: 2, maxSwell: 2.5, minSwell: 0.5, idealWind: "NE", idealSwellDir: "S", tideReq: "mid-high", danger: 3, crowd: 2, img: "🏝️", desc: "Quality reef break in front of resorts. A-frame peaks.", access: "Paddle from beach", bottom: "Reef", lat: -8.7883, lng: 115.2297 },
 ];
 
 interface Profile { level: number | null; boards: string[]; stance: string; crowdPref: number | null; reefComfort: number | null; username?: string; avatarUrl?: string; }
 interface Forecast { swellHeight: number; swellPeriod: number; swellDir: string; wind: string; windSpeed: number; waterTemp: number; tide: { state: string; height: string; nextHigh: string }; }
-interface Spot { id: string; name: string; zone: string; type: string; direction: string; level: number; maxSwell: number; minSwell: number; idealWind: string; idealSwellDir: string; tideReq: string; danger: number; crowd: number; img: string; desc: string; access: string; bottom: string; }
+interface Spot { id: string; name: string; zone: string; type: string; direction: string; level: number; maxSwell: number; minSwell: number; idealWind: string; idealSwellDir: string; tideReq: string; danger: number; crowd: number; img: string; desc: string; access: string; bottom: string; lat: number; lng: number; }
 interface ScoredSpot extends Spot { score: number; reasons: string[]; warnings: string[]; boardTip: string; }
 
 const FALLBACK_FORECAST: Forecast = { swellHeight: 1.6, swellPeriod: 13, swellDir: "S", wind: "SE", windSpeed: 10, waterTemp: 28, tide: { state: "Rising", height: "mid", nextHigh: "11:30 AM" } };
@@ -196,18 +198,8 @@ export default function DailyBrief() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [boardPulse, setBoardPulse] = useState(false);
   const [showWhy, setShowWhy] = useState(false);
-  const [activeTab, setActiveTab] = useState<"call" | "spots">("call");
-
-  useEffect(() => {
-    const onScroll = () => {
-      const el = document.getElementById("all-spots-section");
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      setActiveTab(rect.top <= 120 ? "spots" : "call");
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  const [activeTab, setActiveTab] = useState<"call" | "map">("call");
+  const [popupSpot, setPopupSpot] = useState<ScoredSpot | null>(null);
   const [username, setUsername] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
 
@@ -302,17 +294,11 @@ export default function DailyBrief() {
         <div style={{ display: "flex", gap: 0, padding: "0 16px", marginTop: 10 }}>
           {[
             { label: "Today's Call", icon: "★", id: "call" },
-            { label: "All Spots", icon: "≡", id: "spots" },
+            { label: "Map", icon: "◎", id: "map" },
           ].map(tab => (
             <button
               key={tab.id}
-              onClick={() => {
-                if (tab.id === "spots") {
-                  document.getElementById("all-spots-section")?.scrollIntoView({ behavior: "smooth" });
-                } else {
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }
-              }}
+              onClick={() => setActiveTab(tab.id as "call" | "map")}
               style={{
                 padding: "10px 18px", fontSize: 12, fontWeight: 700,
                 background: "none", border: "none", cursor: "pointer",
@@ -328,7 +314,87 @@ export default function DailyBrief() {
         </div>
       </header>
 
-      <div style={{ maxWidth: 580, margin: "0 auto", padding: "24px 20px 60px" }}>
+      {/* MAP VIEW */}
+      {activeTab === "map" && (
+        <div style={{ height: "calc(100vh - 100px)", position: "relative" }}>
+          <Map
+            mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
+            initialViewState={{ longitude: 115.18, latitude: -8.72, zoom: 10.5 }}
+            style={{ width: "100%", height: "100%" }}
+            mapStyle="mapbox://styles/mapbox/dark-v11"
+            onClick={() => setPopupSpot(null)}
+          >
+            {spots.map((spot, i) => {
+              const color = i === 0 ? "#00d2b4" : spot.score >= 60 ? "#00d2b4" : spot.score >= 40 ? "#f5a623" : "#ff6b6b";
+              const size = i < 3 ? 36 : 28;
+              return (
+                <Marker key={spot.id} longitude={spot.lng} latitude={spot.lat} anchor="center">
+                  <div
+                    onClick={e => { e.stopPropagation(); setPopupSpot(spot); }}
+                    style={{
+                      width: size, height: size, borderRadius: "50%",
+                      background: color === "#00d2b4" ? "rgba(0,210,180,0.15)" : color === "#f5a623" ? "rgba(245,166,35,0.15)" : "rgba(255,107,107,0.15)",
+                      border: `2px solid ${color}`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      cursor: "pointer", fontSize: i < 3 ? 13 : 10, fontWeight: 900, color,
+                      boxShadow: i === 0 ? `0 0 16px ${color}60` : "none",
+                      transition: "all 0.2s",
+                    }}
+                  >
+                    {i === 0 ? "★" : spot.score}
+                  </div>
+                </Marker>
+              );
+            })}
+
+            {popupSpot && (
+              <Popup
+                longitude={popupSpot.lng}
+                latitude={popupSpot.lat}
+                anchor="bottom"
+                onClose={() => setPopupSpot(null)}
+                closeButton={false}
+                offset={20}
+              >
+                <div style={{ background: "#0a1e2e", border: "1px solid rgba(0,210,180,0.2)", borderRadius: 14, padding: "14px 16px", minWidth: 200, color: "#dce8f0" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                    <div>
+                      <div style={{ fontWeight: 800, fontSize: 15 }}>{popupSpot.img} {popupSpot.name}</div>
+                      <div style={{ fontSize: 11, color: "#5a8ca8", marginTop: 2 }}>{popupSpot.zone} · {popupSpot.type}</div>
+                    </div>
+                    <div style={{
+                      width: 38, height: 38, borderRadius: "50%", flexShrink: 0, marginLeft: 10,
+                      background: popupSpot.score >= 60 ? "rgba(0,210,180,0.12)" : "rgba(245,166,35,0.12)",
+                      border: `2px solid ${popupSpot.score >= 60 ? "rgba(0,210,180,0.4)" : "rgba(245,166,35,0.4)"}`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 14, fontWeight: 900,
+                      color: popupSpot.score >= 60 ? "#00d2b4" : "#f5a623",
+                    }}>{popupSpot.score}</div>
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 8 }}>
+                    {popupSpot.reasons.slice(0, 2).map((r, i) => (
+                      <span key={i} style={{ fontSize: 10, background: "rgba(0,210,180,0.06)", border: "1px solid rgba(0,210,180,0.15)", borderRadius: 6, padding: "3px 8px", color: "#00d2b4" }}>✓ {r}</span>
+                    ))}
+                  </div>
+                  {popupSpot.warnings.length > 0 && (
+                    <div style={{ fontSize: 10, color: "#ff8a8a", marginBottom: 6 }}>⚠️ {popupSpot.warnings[0]}</div>
+                  )}
+                  <div style={{ fontSize: 10, color: "#4a6a7a" }}>{popupSpot.access}</div>
+                </div>
+              </Popup>
+            )}
+          </Map>
+
+          {/* Legend */}
+          <div style={{ position: "absolute", bottom: 20, left: 16, background: "rgba(6,15,26,0.9)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "10px 14px", fontSize: 11, color: "#6a9ab8", display: "flex", flexDirection: "column", gap: 5 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}><span style={{ width: 10, height: 10, borderRadius: "50%", background: "#00d2b4", display: "inline-block" }} /> Good match</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}><span style={{ width: 10, height: 10, borderRadius: "50%", background: "#f5a623", display: "inline-block" }} /> Decent</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}><span style={{ width: 10, height: 10, borderRadius: "50%", background: "#ff6b6b", display: "inline-block" }} /> Not ideal</div>
+          </div>
+        </div>
+      )}
+
+      <div style={{ maxWidth: 580, margin: "0 auto", padding: "24px 20px 60px", display: activeTab === "map" ? "none" : "block" }}>
 
         {/* Conditions bar */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 6, marginBottom: 28, animation: "fadeUp 0.5s ease" }}>
