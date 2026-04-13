@@ -219,7 +219,7 @@ export default function SwellAI() {
       const { data } = await supabase
         .from("profiles")
         .select("*")
-        .eq("user_id", userId)
+        .eq("id", userId)
         .single();
       if (data) {
         setProfile({
@@ -258,14 +258,14 @@ export default function SwellAI() {
     if (user) {
       const supabase = createClient();
       await supabase.from("profiles").upsert({
-        user_id: user.id,
+        id: user.id,
         level: profile.level,
         board: profile.board,
         stance: profile.stance,
         crowd_pref: profile.crowdPref,
         reef_comfort: profile.reefComfort,
         updated_at: new Date().toISOString(),
-      }, { onConflict: "user_id" });
+      }, { onConflict: "id" });
     }
 
     let i = 0;
