@@ -247,7 +247,7 @@ export default function SwellAI() {
         .select("*")
         .eq("id", userId)
         .single();
-      if (data && data.level && data.boards?.length > 0 && data.stance && data.crowd_pref !== null && data.reef_comfort !== null) {
+      if (data && data.level) {
         window.location.replace("/daily-brief");
         return true;
       }
