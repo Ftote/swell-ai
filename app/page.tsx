@@ -284,7 +284,10 @@ export default function SwellAI() {
     setLoadingProgress(0);
     go(3);
 
-    // Save profile to Supabase if logged in
+    // Always save to localStorage
+    localStorage.setItem("swellai_profile", JSON.stringify(profile));
+
+    // Also save to Supabase if logged in
     if (user) {
       const supabase = createClient();
       await supabase.from("profiles").upsert({

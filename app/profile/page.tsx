@@ -57,7 +57,7 @@ export default function ProfilePage() {
       if (!data.user) { window.location.href = "/auth"; return; }
       setUser(data.user);
       const { data: p } = await supabase.from("profiles").select("*").eq("id", data.user.id).single();
-      if (p) {
+      if (p && p.level) {
         setProfile({
           level: p.level,
           boards: p.boards ?? [],
@@ -65,6 +65,12 @@ export default function ProfilePage() {
           crowdPref: p.crowd_pref,
           reefComfort: p.reef_comfort,
         });
+      } else {
+        // Fallback: load from localStorage (filled before signing in)
+        const local = localStorage.getItem("swellai_profile");
+        if (local) {
+          try { setProfile(JSON.parse(local)); } catch {}
+        }
       }
       setLoading(false);
     });
