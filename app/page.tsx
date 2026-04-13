@@ -246,14 +246,19 @@ export default function SwellAI() {
         .select("*")
         .eq("id", userId)
         .single();
-      if (data) {
-        setProfile({
+      if (data && data.level && data.boards?.length > 0 && data.stance && data.crowd_pref !== null && data.reef_comfort !== null) {
+        const savedProfile: Profile = {
           level: data.level,
           boards: data.boards ?? [],
           stance: data.stance,
           crowdPref: data.crowd_pref,
           reefComfort: data.reef_comfort,
-        });
+        };
+        setProfile(savedProfile);
+        // Profil complet — aller direct aux résultats
+        const scored = SPOTS.map(s => ({ ...s, ...scoreSpot(s, savedProfile, FORECAST_FALLBACK) })).sort((a, b) => b.score - a.score);
+        setResults(scored);
+        setStep(3);
       }
     };
 
