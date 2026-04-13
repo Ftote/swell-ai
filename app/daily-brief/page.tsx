@@ -321,14 +321,15 @@ export default function DailyBrief() {
 
         {/* Conditions bar */}
         {(() => {
-          const energy = Math.round(0.5 * Math.pow(forecast.swellHeight, 2) * forecast.swellPeriod);
-          const energyLabel = energy < 5 ? "Tiny" : energy < 15 ? "Small" : energy < 30 ? "Medium" : energy < 60 ? "Powerful" : "Massive";
+          const energyKj = Math.round(0.49 * Math.pow(forecast.swellHeight, 2) * Math.pow(forecast.swellPeriod, 2));
+          const energyDisplay = energyKj >= 1000 ? `${(energyKj / 1000).toFixed(1)}MJ` : `${energyKj}kJ`;
+          const energyLabel = energyKj < 10 ? "Tiny" : energyKj < 50 ? "Small" : energyKj < 150 ? "Medium" : energyKj < 400 ? "Powerful" : "Massive";
           return (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 5, marginBottom: 28, animation: "fadeUp 0.5s ease" }}>
               {[
                 { l: "SWELL", v: `${forecast.swellHeight}m`, s: forecast.swellDir },
                 { l: "PERIOD", v: `${forecast.swellPeriod}s`, s: forecast.swellPeriod >= 14 ? "Ground" : forecast.swellPeriod >= 10 ? "Swell" : "Wind" },
-                { l: "ENERGY", v: `${energy}`, s: "kW/m" },
+                { l: "ENERGY", v: energyDisplay, s: energyLabel },
                 { l: "WIND", v: forecast.wind, s: `${forecast.windSpeed}km/h` },
                 { l: "TIDE", v: forecast.tide.state === "Rising" ? "↗" : "↘", s: forecast.tide.state },
                 { l: "HIGH", v: forecast.tide.nextHigh, s: "" },
