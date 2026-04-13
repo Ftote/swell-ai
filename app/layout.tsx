@@ -9,7 +9,7 @@ const outfit = Outfit({
 
 export const metadata: Metadata = {
   title: "SWELL-AI — Bali Surf Intelligence",
-  description: "Stop guessing. Your AI surf coach picks the best Bali spot for you today.",
+  description: "Stop guessing. Your AI surf coach picks the best spot for you, anywhere in the world.",
 };
 
 export default function RootLayout({
