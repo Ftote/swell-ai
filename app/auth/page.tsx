@@ -26,7 +26,7 @@ export default function AuthPage() {
     } else if (mode === "signup") {
       setMessage({ text: "Check your email to confirm your account!", error: false });
     } else {
-      window.location.href = "/";
+      window.location.href = "/daily-brief";
     }
     setLoading(false);
   };
@@ -35,7 +35,7 @@ export default function AuthPage() {
     setLoading(true);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/` },
+      options: { redirectTo: `${window.location.origin}/daily-brief` },
     });
     if (error) setMessage({ text: error.message, error: true });
     setLoading(false);
