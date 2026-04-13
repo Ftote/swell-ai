@@ -222,7 +222,7 @@ function TideChart({ nextHighStr, tideState }: { nextHighStr: string; tideState:
   const PAD_L = 30;
   const PAD_R = 10;
   const PAD_T = 10;
-  const PAD_B = 22;
+  const PAD_B = 30;
   const chartW = W - PAD_L - PAD_R;
   const chartH = H - PAD_T - PAD_B;
   const maxH = MID + AMP + 0.1;
@@ -244,9 +244,9 @@ function TideChart({ nextHighStr, tideState }: { nextHighStr: string; tideState:
   const nowTideH = tide(nowClamped);
   const nowY = toY(nowTideH);
 
-  // Hour ticks every 3h
+  // Hour ticks every 1h
   const ticks: number[] = [];
-  for (let t = Math.ceil(SUNRISE / 60) * 60; t <= SUNSET; t += 180) ticks.push(t);
+  for (let t = Math.ceil(SUNRISE / 60) * 60; t <= SUNSET; t += 60) ticks.push(t);
 
   // Y-axis labels
   const yMarks = [0, 0.5, 1.0, 1.5];
@@ -285,26 +285,30 @@ function TideChart({ nextHighStr, tideState }: { nextHighStr: string; tideState:
             </g>
           )}
 
-          {/* Hour ticks */}
+          {/* Hour ticks — every hour */}
           {ticks.map(t => {
             const x = toX(t);
             const h = t / 60;
-            const label = h < 12 ? `${h}am` : h === 12 ? "12pm" : `${h - 12}pm`;
+            const isSunrise = t === SUNRISE || Math.abs(t - SUNRISE) < 30;
+            const isSunset = Math.abs(t - SUNSET) < 30;
+            if (isSunrise || isSunset) return null; // handled separately
+            const label = h < 12 ? `${h}` : h === 12 ? "12" : `${h - 12}`;
+            const ampm = h < 12 ? "am" : "pm";
             return (
               <g key={t}>
-                <line x1={x} y1={PAD_T + chartH} x2={x} y2={PAD_T + chartH + 4} stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
-                <text x={x} y={PAD_T + chartH + 13} textAnchor="middle" fontSize="8" fill="rgba(90,140,168,0.6)">{label}</text>
+                <line x1={x} y1={PAD_T + chartH} x2={x} y2={PAD_T + chartH + 3} stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
+                <text x={x} y={PAD_T + chartH + 11} textAnchor="middle" fontSize="7" fill="rgba(90,140,168,0.55)">{label}<tspan fontSize="6">{ampm}</tspan></text>
               </g>
             );
           })}
 
-          {/* Sunrise label */}
-          <text x={PAD_L} y={PAD_T + chartH + 13} textAnchor="middle" fontSize="9" fill="rgba(245,166,35,0.7)">🌅</text>
-          <text x={PAD_L} y={PAD_T + chartH + 21} textAnchor="middle" fontSize="7" fill="rgba(90,140,168,0.5)">6:10</text>
+          {/* Sunrise */}
+          <text x={PAD_L} y={PAD_T + chartH + 11} textAnchor="middle" fontSize="7.5" fill="rgba(245,166,35,0.8)">6:10</text>
+          <text x={PAD_L} y={PAD_T + chartH + 22} textAnchor="middle" fontSize="11">🌅</text>
 
-          {/* Sunset label */}
-          <text x={PAD_L + chartW} y={PAD_T + chartH + 13} textAnchor="middle" fontSize="9" fill="rgba(245,166,35,0.7)">🌇</text>
-          <text x={PAD_L + chartW} y={PAD_T + chartH + 21} textAnchor="middle" fontSize="7" fill="rgba(90,140,168,0.5)">18:20</text>
+          {/* Sunset */}
+          <text x={PAD_L + chartW} y={PAD_T + chartH + 11} textAnchor="middle" fontSize="7.5" fill="rgba(245,166,35,0.8)">18:20</text>
+          <text x={PAD_L + chartW} y={PAD_T + chartH + 22} textAnchor="middle" fontSize="11">🌇</text>
         </svg>
       </div>
     </div>
