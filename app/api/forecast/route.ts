@@ -68,6 +68,26 @@ export async function GET() {
     const waterTemp = Math.round(get("waterTemperature"));
     const tide = getTideState(now.getHours());
 
+    // Build hourly wind data for today (Bali daylight: 6am–18pm)
+    const todayStr = now.toISOString().slice(0, 10);
+    const hourlyWind = hours
+      .filter(h => {
+        const t = (h as { time: string }).time;
+        const hr = new Date(t).getHours();
+        return t.startsWith(todayStr) && hr >= 6 && hr <= 18;
+      })
+      .map(h => {
+        const t = new Date((h as { time: string }).time);
+        const spd = ((h["windSpeed"] as { sg?: number })?.sg ?? 0) * 3.6;
+        const deg = (h["windDirection"] as { sg?: number })?.sg ?? 0;
+        return {
+          hour: t.getHours(),
+          speed: Math.round(spd),
+          dir: degreesToCompass(deg),
+          deg: Math.round(deg),
+        };
+      });
+
     return NextResponse.json({
       swellHeight: waveHeight,
       swellPeriod: wavePeriod,
@@ -76,6 +96,7 @@ export async function GET() {
       windSpeed: windSpeedKmh,
       waterTemp,
       tide,
+      hourlyWind,
       fetchedAt: now.toISOString(),
     });
   } catch (err) {

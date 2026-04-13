@@ -31,7 +31,8 @@ const SPOTS = [
 ];
 
 interface Profile { level: number | null; boards: string[]; stance: string; crowdPref: number | null; reefComfort: number | null; username?: string; avatarUrl?: string; }
-interface Forecast { swellHeight: number; swellPeriod: number; swellDir: string; wind: string; windSpeed: number; waterTemp: number; tide: { state: string; height: string; nextHigh: string }; }
+interface HourlyWind { hour: number; speed: number; dir: string; deg: number; }
+interface Forecast { swellHeight: number; swellPeriod: number; swellDir: string; wind: string; windSpeed: number; waterTemp: number; tide: { state: string; height: string; nextHigh: string }; hourlyWind?: HourlyWind[]; }
 interface Spot { id: string; name: string; zone: string; type: string; direction: string; level: number; maxSwell: number; minSwell: number; idealWind: string; idealSwellDir: string; tideReq: string; danger: number; crowd: number; img: string; desc: string; access: string; bottom: string; lat: number; lng: number; }
 interface ScoredSpot extends Spot { score: number; reasons: string[]; warnings: string[]; boardTip: string; }
 
@@ -189,6 +190,104 @@ function generateWhyText(spot: ScoredSpot, profile: Profile, forecast: Forecast)
   sections.push({ title: "Crowd & vibe", body: vibeBody });
 
   return sections;
+}
+
+// Wind direction → offshore quality for west-facing Bali breaks
+function windQuality(deg: number): "offshore" | "cross" | "onshore" {
+  // Offshore for west coast = E quadrant (45°–180°) → wind from land
+  if (deg >= 45 && deg <= 180) return "offshore";
+  if ((deg > 180 && deg <= 225) || (deg > 315) || deg < 45) return "cross";
+  return "onshore"; // W/NW/SW (225°–315°)
+}
+
+const QUALITY_COLORS = { offshore: "#00d2b4", cross: "#f5a623", onshore: "#ff6b6b" };
+
+function WindChart({ hourlyWind }: { hourlyWind: HourlyWind[] }) {
+  const now = new Date().getHours();
+
+  if (!hourlyWind || hourlyWind.length === 0) return null;
+
+  const maxSpeed = Math.max(...hourlyWind.map(h => h.speed), 30);
+  const W = 540;
+  const H = 100;
+  const PAD_L = 30;
+  const PAD_R = 10;
+  const PAD_T = 8;
+  const PAD_B = 30;
+  const chartW = W - PAD_L - PAD_R;
+  const chartH = H - PAD_T - PAD_B;
+  const n = hourlyWind.length;
+  const barW = Math.floor(chartW / n) - 2;
+
+  return (
+    <div style={{ marginBottom: 24, animation: "fadeUp 0.5s ease 0.08s both" }}>
+      <div style={{ fontSize: 9.5, fontWeight: 700, color: "#4a6a7a", letterSpacing: "2px", fontFamily: "monospace", marginBottom: 8 }}>
+        WIND TODAY
+      </div>
+      <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "14px 12px 8px", overflow: "hidden" }}>
+        <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block" }}>
+          {/* Y-axis grid + labels */}
+          {[0, 10, 20, 30].map(spd => {
+            const y = PAD_T + chartH - (spd / maxSpeed) * chartH;
+            if (y < PAD_T) return null;
+            return (
+              <g key={spd}>
+                <line x1={PAD_L} y1={y} x2={PAD_L + chartW} y2={y} stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
+                <text x={PAD_L - 4} y={y + 3.5} textAnchor="end" fontSize="8" fill="rgba(90,140,168,0.6)">{spd}</text>
+              </g>
+            );
+          })}
+
+          {/* Bars + direction arrows */}
+          {hourlyWind.map((h, i) => {
+            const x = PAD_L + i * (chartW / n) + 1;
+            const barH = Math.max(4, (h.speed / maxSpeed) * chartH);
+            const y = PAD_T + chartH - barH;
+            const quality = windQuality(h.deg);
+            const color = QUALITY_COLORS[quality];
+            const isNow = h.hour === now;
+            // Arrow: rotate SVG arrow by wind direction
+            const cx = x + barW / 2;
+            const cy = y - 10;
+            return (
+              <g key={h.hour}>
+                {/* Bar */}
+                <rect x={x} y={y} width={barW} height={barH}
+                  fill={color} opacity={isNow ? 1 : 0.5} rx="2" />
+                {/* Direction arrow */}
+                <g transform={`translate(${cx}, ${cy}) rotate(${h.deg})`}>
+                  <line x1="0" y1="5" x2="0" y2="-5" stroke={color} strokeWidth="1.5" opacity={isNow ? 1 : 0.7} />
+                  <polygon points="0,-7 -2.5,-3 2.5,-3" fill={color} opacity={isNow ? 1 : 0.7} />
+                </g>
+                {/* Hour label */}
+                <text x={cx} y={PAD_T + chartH + 11} textAnchor="middle" fontSize="7" fill={isNow ? "#dce8f0" : "rgba(90,140,168,0.55)"}>
+                  {h.hour < 12 ? `${h.hour}` : h.hour === 12 ? "12" : `${h.hour - 12}`}
+                  <tspan fontSize="6">{h.hour < 12 ? "am" : "pm"}</tspan>
+                </text>
+                {/* Speed label on current hour */}
+                {isNow && (
+                  <text x={cx} y={y - 18} textAnchor="middle" fontSize="8" fontWeight="700" fill={color}>{h.speed}km/h</text>
+                )}
+              </g>
+            );
+          })}
+
+          {/* "now" highlight */}
+          {hourlyWind.map((h, i) => {
+            if (h.hour !== now) return null;
+            const x = PAD_L + i * (chartW / n) + 1;
+            return <rect key="now-bg" x={x - 1} y={PAD_T} width={barW + 2} height={chartH} fill="rgba(255,255,255,0.04)" rx="2" />;
+          })}
+
+          {/* Legend */}
+          <text x={PAD_L} y={PAD_T + chartH + 22} fontSize="7" fill={QUALITY_COLORS.offshore}>● offshore</text>
+          <text x={PAD_L + 55} y={PAD_T + chartH + 22} fontSize="7" fill={QUALITY_COLORS.cross}>● cross</text>
+          <text x={PAD_L + 95} y={PAD_T + chartH + 22} fontSize="7" fill={QUALITY_COLORS.onshore}>● onshore</text>
+          <text x={PAD_L + chartW} y={PAD_T + chartH + 22} textAnchor="end" fontSize="7" fill="rgba(90,140,168,0.5)">km/h</text>
+        </svg>
+      </div>
+    </div>
+  );
 }
 
 function TideChart({ nextHighStr, tideState }: { nextHighStr: string; tideState: string }) {
@@ -468,6 +567,11 @@ export default function DailyBrief() {
             </div>
           );
         })()}
+
+        {/* Wind chart */}
+        {forecast.hourlyWind && forecast.hourlyWind.length > 0 && (
+          <WindChart hourlyWind={forecast.hourlyWind} />
+        )}
 
         {/* Tide chart */}
         <TideChart nextHighStr={forecast.tide.nextHigh} tideState={forecast.tide.state} />
