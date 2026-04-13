@@ -241,30 +241,24 @@ export default function SwellAI() {
 
     const supabase = createClient();
 
-    const loadProfile = async (userId: string) => {
+    const loadProfile = async (userId: string): Promise<boolean> => {
       const { data } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", userId)
         .single();
       if (data && data.level && data.boards?.length > 0 && data.stance && data.crowd_pref !== null && data.reef_comfort !== null) {
-        const savedProfile: Profile = {
-          level: data.level,
-          boards: data.boards ?? [],
-          stance: data.stance,
-          crowdPref: data.crowd_pref,
-          reefComfort: data.reef_comfort,
-        };
-        setProfile(savedProfile);
-        // Profil complet — rediriger vers Daily Brief
-        window.location.href = "/daily-brief";
+        window.location.replace("/daily-brief");
+        return true;
       }
+      return false;
     };
 
     supabase.auth.getUser().then(async ({ data }) => {
       setUser(data.user);
       if (data.user) {
-        await loadProfile(data.user.id);
+        const redirected = await loadProfile(data.user.id);
+        if (redirected) return; // stay on loading screen during navigation
       }
       setAuthChecking(false);
     });

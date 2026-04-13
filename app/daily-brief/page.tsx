@@ -196,6 +196,18 @@ export default function DailyBrief() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [boardPulse, setBoardPulse] = useState(false);
   const [showWhy, setShowWhy] = useState(false);
+  const [activeTab, setActiveTab] = useState<"call" | "spots">("call");
+
+  useEffect(() => {
+    const onScroll = () => {
+      const el = document.getElementById("all-spots-section");
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      setActiveTab(rect.top <= 120 ? "spots" : "call");
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
   const [username, setUsername] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
 
@@ -260,28 +272,59 @@ export default function DailyBrief() {
         @keyframes fadeUp { from{opacity:0;transform:translateY(20px);} to{opacity:1;transform:translateY(0);} }
       `}</style>
 
-      {/* Header */}
-      <header style={{ padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 50, background: "rgba(6,15,26,0.85)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-        <a href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", color: "inherit" }}>
-          <div style={{ width: 34, height: 34, borderRadius: 9, background: "linear-gradient(135deg, #00d2b4, #00a896)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>🌊</div>
-          <div>
-            <div style={{ fontWeight: 900, fontSize: 16, letterSpacing: "-0.5px", lineHeight: 1 }}>SWELL-AI</div>
-            <div style={{ fontSize: 8, color: "#00d2b4", fontFamily: "monospace", letterSpacing: "2px" }}>DAILY BRIEF</div>
-          </div>
-        </a>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ fontSize: 11, color: "#4a6a7a" }}>{new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</span>
-          <a href="/profile" style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, padding: "6px 12px", textDecoration: "none", color: "#6a9ab8", fontSize: 12 }}>
-            {avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={avatarUrl} alt="avatar" style={{ width: 20, height: 20, borderRadius: "50%", objectFit: "cover" }} />
-            ) : (
-              <div style={{ width: 20, height: 20, borderRadius: "50%", background: "linear-gradient(135deg, #00d2b4, #00a896)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "#060f1a", fontWeight: 700 }}>
-                {username ? username[0].toUpperCase() : "?"}
-              </div>
-            )}
-            {username || "Profile"}
+      {/* Header + tabs */}
+      <header style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(6,15,26,0.92)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <div style={{ padding: "14px 24px 0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <a href="/daily-brief" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", color: "inherit" }}>
+            <div style={{ width: 34, height: 34, borderRadius: 9, background: "linear-gradient(135deg, #00d2b4, #00a896)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>🌊</div>
+            <div>
+              <div style={{ fontWeight: 900, fontSize: 16, letterSpacing: "-0.5px", lineHeight: 1 }}>SWELL-AI</div>
+              <div style={{ fontSize: 8, color: "#00d2b4", fontFamily: "monospace", letterSpacing: "2px" }}>DAILY BRIEF</div>
+            </div>
           </a>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 11, color: "#4a6a7a" }}>{new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</span>
+            <a href="/profile" style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, padding: "6px 12px", textDecoration: "none", color: "#6a9ab8", fontSize: 12 }}>
+              {avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={avatarUrl} alt="avatar" style={{ width: 20, height: 20, borderRadius: "50%", objectFit: "cover" }} />
+              ) : (
+                <div style={{ width: 20, height: 20, borderRadius: "50%", background: "linear-gradient(135deg, #00d2b4, #00a896)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "#060f1a", fontWeight: 700 }}>
+                  {username ? username[0].toUpperCase() : "?"}
+                </div>
+              )}
+              {username || "Profile"}
+            </a>
+          </div>
+        </div>
+
+        {/* Tab bar */}
+        <div style={{ display: "flex", gap: 0, padding: "0 16px", marginTop: 10 }}>
+          {[
+            { label: "Today's Call", icon: "★", id: "call" },
+            { label: "All Spots", icon: "≡", id: "spots" },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => {
+                if (tab.id === "spots") {
+                  document.getElementById("all-spots-section")?.scrollIntoView({ behavior: "smooth" });
+                } else {
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }
+              }}
+              style={{
+                padding: "10px 18px", fontSize: 12, fontWeight: 700,
+                background: "none", border: "none", cursor: "pointer",
+                color: activeTab === tab.id ? "#00d2b4" : "#4a6a7a",
+                borderBottom: activeTab === tab.id ? "2px solid #00d2b4" : "2px solid transparent",
+                letterSpacing: "0.5px", transition: "all 0.2s",
+                display: "flex", alignItems: "center", gap: 6,
+              }}
+            >
+              <span style={{ fontSize: 11 }}>{tab.icon}</span> {tab.label}
+            </button>
+          ))}
         </div>
       </header>
 
@@ -418,7 +461,7 @@ export default function DailyBrief() {
         )}
 
         {/* All spots */}
-        <div style={{ animation: "fadeUp 0.6s ease 0.3s both" }}>
+        <div id="all-spots-section" style={{ animation: "fadeUp 0.6s ease 0.3s both" }}>
           <div style={{ fontSize: 9.5, fontWeight: 700, color: "#4a6a7a", letterSpacing: "2px", fontFamily: "monospace", marginBottom: 12 }}>
             ALL SPOTS — RANKED FOR YOU
           </div>
