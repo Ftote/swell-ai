@@ -93,6 +93,101 @@ function getBoardRecommendation(profile: Profile, forecast: Forecast): string {
 const dangerColors: Record<number, string> = { 1: "#00d2b4", 2: "#00d2b4", 3: "#f5a623", 4: "#ff6b6b", 5: "#ff3b3b" };
 const dangerLabels: Record<number, string> = { 1: "Safe", 2: "Easy", 3: "Caution", 4: "Serious", 5: "Expert only" };
 
+function generateWhyText(spot: ScoredSpot, profile: Profile, forecast: Forecast): { title: string; body: string }[] {
+  const sections: { title: string; body: string }[] = [];
+  const level = profile.level ?? 1;
+
+  // --- LEVEL MATCH ---
+  const diff = spot.level - level;
+  const levelNames = ["", "beginner", "intermediate", "advanced"];
+  if (diff === 0) {
+    sections.push({
+      title: "Perfect level match",
+      body: `${spot.name} is rated for ${levelNames[level]} surfers — exactly your level. This means the waves will challenge you without overwhelming you. You'll be able to read the sets, paddle into waves confidently, and focus on improving your technique rather than surviving.`,
+    });
+  } else if (diff === -1) {
+    sections.push({
+      title: "A relaxed session",
+      body: `${spot.name} is designed for ${levelNames[spot.level]} surfers, and you're ${levelNames[level]}. This gives you an easy, low-pressure session — great when the conditions aren't ideal everywhere else. Use it to work on your fundamentals, footwork, or try new things without stress.`,
+    });
+  } else if (diff === 1) {
+    sections.push({
+      title: "A step-up challenge",
+      body: `${spot.name} is rated ${levelNames[spot.level]} while you're ${levelNames[level]}. Pushing yourself at a slightly harder spot is one of the fastest ways to progress — but go with a buddy, stay aware of the lineup, and don't be afraid to sit and observe first.`,
+    });
+  }
+
+  // --- SWELL ---
+  const sh = forecast.swellHeight;
+  const sp = forecast.swellPeriod;
+  const swellInRange = sh >= spot.minSwell && sh <= spot.maxSwell;
+  let swellBody = `Today's swell is ${sh}m at ${sp} seconds from the ${forecast.swellDir}. `;
+  if (swellInRange) {
+    swellBody += `This is exactly in ${spot.name}'s sweet spot (${spot.minSwell}–${spot.maxSwell}m). `;
+    if (sp >= 14) swellBody += `A ${sp}s period means this is a powerful, well-organized groundswell — waves will be clean, consistent and have real push. `;
+    else if (sp >= 10) swellBody += `A ${sp}s period gives solid, rideable waves with good shape. `;
+    else swellBody += `A ${sp}s period is short — expect punchier, less organized waves but still surfable. `;
+    if (forecast.swellDir === spot.idealSwellDir) swellBody += `The ${forecast.swellDir} swell direction hits ${spot.name} at the ideal angle, creating the best possible wave shape for this break.`;
+    else swellBody += `Swell direction is slightly off-angle for this spot but still workable.`;
+  } else if (sh < spot.minSwell) {
+    swellBody += `It's a bit small for ${spot.name}'s ideal range (${spot.minSwell}–${spot.maxSwell}m), but you'll still find rideable waves — just pick your sets carefully and stay patient. `;
+    swellBody += `On small days, positioning and timing matter more than power.`;
+  } else {
+    swellBody += `The swell is above ${spot.name}'s ideal range — expect bigger, more powerful surf than usual. `;
+    swellBody += `The spot will still work, but conditions may be more demanding. Paddle with extra caution.`;
+  }
+  sections.push({ title: "Swell conditions", body: swellBody });
+
+  // --- WIND ---
+  let windBody = `Wind is ${forecast.wind} at ${forecast.windSpeed}km/h today. `;
+  if (forecast.wind === spot.idealWind) {
+    windBody += `${forecast.wind} winds are offshore at ${spot.name} — this is the holy grail. Offshore wind blows from land to sea, holding the wave face up and creating clean, groomed conditions. `;
+    windBody += `The wave will stand up properly before breaking, giving you more time to read it and more wall to work with.`;
+  } else if (forecast.windSpeed < 8) {
+    windBody += `Even though it's not perfectly offshore here, light winds under 8km/h rarely ruin a session — the surface stays relatively smooth. `;
+    windBody += `You'll see some chop but nothing too disruptive.`;
+  } else {
+    windBody += `The wind isn't ideal for this spot — onshore or cross-shore winds can chop up the surface and make wave faces messy. `;
+    windBody += `Go early in the morning before the wind picks up, as most spots in Bali are cleanest at dawn.`;
+  }
+  sections.push({ title: "Wind & surface conditions", body: windBody });
+
+  // --- TIDE ---
+  let tideBody = `The tide is currently ${forecast.tide.state.toLowerCase()}, ${forecast.tide.height}. Next high tide: ${forecast.tide.nextHigh}. `;
+  const tideOk = spot.tideReq === "all" || spot.tideReq.includes(forecast.tide.height);
+  if (tideOk) {
+    tideBody += `${spot.name} works well at ${spot.tideReq === "all" ? "all tides" : spot.tideReq + " tide"}, which is what you have now. `;
+    if (spot.type === "Reef break") tideBody += `Reef breaks in Bali are especially tide-dependent: too low and the reef becomes dangerously shallow; too high and the waves lose their shape. Right now is the optimal window.`;
+    else tideBody += `Beach breaks are more forgiving with tide — you're in good shape.`;
+  } else {
+    tideBody += `${spot.name} is best at ${spot.tideReq} tide. The current tide isn't perfect, but it may still be surfable — especially as it transitions. `;
+    tideBody += `Watch how experienced locals are reading it before paddling out.`;
+  }
+  sections.push({ title: "Tide & timing", body: tideBody });
+
+  // --- CROWD & REEF ---
+  const crowdPref = profile.crowdPref ?? 0;
+  let vibeBody = "";
+  if (crowdPref >= 1 && spot.crowd <= 2) {
+    vibeBody += `${spot.name} is one of Bali's quieter spots — you won't be fighting for waves. `;
+    vibeBody += `Less crowd means more waves per hour, more space to experiment, and a much more relaxed vibe in the water. `;
+  } else if (spot.crowd >= 4) {
+    vibeBody += `${spot.name} gets busy. In a crowded lineup, priority rules matter — the surfer closest to the peak has right of way. `;
+    vibeBody += `Paddle wide, observe the flow before committing to waves, and always communicate with fellow surfers.`;
+  } else {
+    vibeBody += `Crowd levels at ${spot.name} are moderate — manageable if you know the etiquette. `;
+    vibeBody += `Arrive early (before 8am) for the best ratio of waves to people.`;
+  }
+  if (spot.bottom.toLowerCase().includes("reef")) {
+    vibeBody += ` The bottom here is reef — wear booties if you're not fully comfortable with reef, stay on the wave until it's done (don't fall off early), and know your entry/exit before you paddle out.`;
+  } else {
+    vibeBody += ` Sandy bottom — no worries about the seafloor, just watch for rip currents.`;
+  }
+  sections.push({ title: "Crowd & vibe", body: vibeBody });
+
+  return sections;
+}
+
 export default function DailyBrief() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [forecast, setForecast] = useState<Forecast>(FALLBACK_FORECAST);
@@ -100,6 +195,7 @@ export default function DailyBrief() {
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [boardPulse, setBoardPulse] = useState(false);
+  const [showWhy, setShowWhy] = useState(false);
   const [username, setUsername] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
 
@@ -254,6 +350,45 @@ export default function DailyBrief() {
                 <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 6 }}>
                   {top.warnings.map((w, i) => (
                     <div key={i} style={{ background: "rgba(255,107,107,0.06)", border: "1px solid rgba(255,107,107,0.12)", borderRadius: 10, padding: "8px 12px", fontSize: 12, color: "#ff8a8a" }}>⚠️ {w}</div>
+                  ))}
+                </div>
+              )}
+
+              {/* Why button */}
+              <button
+                onClick={() => setShowWhy(v => !v)}
+                style={{
+                  marginTop: 18, width: "100%", padding: "12px 16px",
+                  background: showWhy ? "rgba(0,210,180,0.08)" : "rgba(255,255,255,0.03)",
+                  border: `1px solid ${showWhy ? "rgba(0,210,180,0.25)" : "rgba(255,255,255,0.08)"}`,
+                  borderRadius: 12, cursor: "pointer", fontSize: 13, fontWeight: 600,
+                  color: showWhy ? "#00d2b4" : "#6a9ab8",
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  transition: "all 0.2s", position: "relative",
+                }}
+              >
+                <span>Why we advise you this spot</span>
+                <span style={{ fontSize: 16, transition: "transform 0.2s", transform: showWhy ? "rotate(180deg)" : "none" }}>›</span>
+              </button>
+
+              {/* Why panel */}
+              {showWhy && profile && (
+                <div style={{ marginTop: 2, borderRadius: 14, overflow: "hidden", border: "1px solid rgba(0,210,180,0.12)", background: "rgba(0,0,0,0.2)" }}>
+                  {generateWhyText(top, profile, forecast).map((section, i) => (
+                    <div key={i} style={{
+                      padding: "18px 20px",
+                      borderBottom: i < 3 ? "1px solid rgba(255,255,255,0.04)" : "none",
+                    }}>
+                      <div style={{
+                        fontSize: 10, fontWeight: 700, color: "#00d2b4", letterSpacing: "1.5px",
+                        fontFamily: "monospace", textTransform: "uppercase", marginBottom: 8,
+                      }}>
+                        {["🎯","🌊","💨","🌊","👥"][i]} {section.title}
+                      </div>
+                      <div style={{ fontSize: 13, color: "#8ab4cc", lineHeight: 1.7 }}>
+                        {section.body}
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}
