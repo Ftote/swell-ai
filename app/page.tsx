@@ -312,12 +312,12 @@ export default function SwellAI() {
               </h1>
               <p style={{ color: "#5a8ca8", fontSize: 15, marginTop: 14, lineHeight: 1.6 }}>
                 Tell us your level. We tell you<br />
-                <span style={{ color: "#00d2b4", fontWeight: 600 }}>exactly where to paddle out in Bali today</span>.
+                <span style={{ color: "#00d2b4", fontWeight: 600 }}>exactly where to paddle out today</span>.
               </p>
             </div>
 
             <Card style={{ marginBottom: 20, padding: 24 }}>
-              <div style={{ textAlign: "center", marginBottom: 18, fontSize: 13, color: "#5a8ca8", fontWeight: 500 }}>The old way — complicated & risky</div>
+              <div style={{ textAlign: "center", marginBottom: 18, fontSize: 13, color: "#5a8ca8", fontWeight: 500 }}>The old way</div>
               <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
                 {[{ n: "1", t: "Read forecast", s: "Swell, wind, tides..." }, { n: "2", t: "Interpret", s: "Which spot works?" }, { n: "3", t: "Guess", s: "Hope for the best" }].map((x, i) => (
                   <div key={i} style={{ flex: 1, textAlign: "center", padding: 10, borderRadius: 10, background: "rgba(255,100,100,0.04)", border: "1px solid rgba(255,100,100,0.08)" }}>
