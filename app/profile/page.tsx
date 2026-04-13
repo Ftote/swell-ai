@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
 
@@ -20,6 +20,8 @@ interface Profile {
   stance: string;
   crowdPref: number | null;
   reefComfort: number | null;
+  username: string;
+  avatarUrl: string;
 }
 
 function Label({ children }: { children: React.ReactNode }) {
@@ -46,10 +48,15 @@ function Pill({ selected, children, onClick }: { selected: boolean; children: Re
 
 export default function ProfilePage() {
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile>({ level: null, boards: [], stance: "", crowdPref: null, reefComfort: null });
+  const [profile, setProfile] = useState<Profile>({
+    level: null, boards: [], stance: "", crowdPref: null, reefComfort: null,
+    username: "", avatarUrl: "",
+  });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -64,17 +71,36 @@ export default function ProfilePage() {
           stance: p.stance,
           crowdPref: p.crowd_pref,
           reefComfort: p.reef_comfort,
+          username: p.username ?? "",
+          avatarUrl: p.avatar_url ?? "",
         });
       } else {
-        // Fallback: load from localStorage (filled before signing in)
         const local = localStorage.getItem("swellai_profile");
         if (local) {
-          try { setProfile(JSON.parse(local)); } catch {}
+          try {
+            const parsed = JSON.parse(local);
+            setProfile(prev => ({ ...prev, ...parsed }));
+          } catch {}
         }
       }
       setLoading(false);
     });
   }, []);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    setUploadingAvatar(true);
+    const supabase = createClient();
+    const ext = file.name.split(".").pop();
+    const path = `${user.id}.${ext}`;
+    const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+    if (!error) {
+      const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path);
+      setProfile(p => ({ ...p, avatarUrl: publicUrl }));
+    }
+    setUploadingAvatar(false);
+  };
 
   const save = async () => {
     if (!user) return;
@@ -87,6 +113,8 @@ export default function ProfilePage() {
       stance: profile.stance,
       crowd_pref: profile.crowdPref,
       reef_comfort: profile.reefComfort,
+      username: profile.username,
+      avatar_url: profile.avatarUrl,
       updated_at: new Date().toISOString(),
     }, { onConflict: "id" });
     setSaving(false);
@@ -127,13 +155,57 @@ export default function ProfilePage() {
 
       <div style={{ maxWidth: 540, margin: "0 auto", padding: "0 20px 60px" }}>
 
-        {/* Avatar */}
-        <div style={{ textAlign: "center", margin: "24px 0 32px" }}>
-          <div style={{ width: 64, height: 64, borderRadius: "50%", background: "linear-gradient(135deg, #00d2b4, #00a896)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: 700, color: "#060f1a", margin: "0 auto 12px" }}>
-            {(user?.email ?? "?")[0].toUpperCase()}
+        {/* Avatar + Username */}
+        <div style={{ textAlign: "center", margin: "24px 0 36px" }}>
+          {/* Avatar */}
+          <div style={{ position: "relative", display: "inline-block", marginBottom: 16 }}>
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              style={{
+                width: 80, height: 80, borderRadius: "50%", cursor: "pointer",
+                background: profile.avatarUrl ? "transparent" : "linear-gradient(135deg, #00d2b4, #00a896)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: profile.avatarUrl ? 0 : 30, fontWeight: 700, color: "#060f1a",
+                border: "3px solid rgba(0,210,180,0.3)",
+                overflow: "hidden", position: "relative",
+              }}
+            >
+              {profile.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={profile.avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : (
+                <span>{(user?.email ?? "?")[0].toUpperCase()}</span>
+              )}
+              <div style={{
+                position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                opacity: 0, transition: "opacity 0.2s",
+              }}
+                onMouseEnter={e => (e.currentTarget.style.opacity = "1")}
+                onMouseLeave={e => (e.currentTarget.style.opacity = "0")}
+              >
+                <span style={{ fontSize: 20 }}>{uploadingAvatar ? "⏳" : "📷"}</span>
+              </div>
+            </div>
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleAvatarUpload} style={{ display: "none" }} />
           </div>
-          <div style={{ fontWeight: 700, fontSize: 16 }}>{user?.email}</div>
-          <div style={{ fontSize: 11, color: "#4a6a7a", marginTop: 4 }}>Surf profile</div>
+
+          {/* Username */}
+          <div style={{ position: "relative", maxWidth: 260, margin: "0 auto" }}>
+            <input
+              type="text"
+              value={profile.username}
+              onChange={e => setProfile(p => ({ ...p, username: e.target.value }))}
+              placeholder="Your surf name / blaze"
+              maxLength={30}
+              style={{
+                width: "100%", padding: "10px 16px", borderRadius: 12, fontSize: 15, fontWeight: 600,
+                background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
+                color: "#dce8f0", outline: "none", textAlign: "center",
+              }}
+            />
+          </div>
+          <div style={{ fontSize: 11, color: "#4a6a7a", marginTop: 6 }}>{user?.email}</div>
         </div>
 
         {/* Level */}
