@@ -271,7 +271,7 @@ export default function SwellAI() {
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ width: 38, height: 38, borderRadius: 10, background: "linear-gradient(135deg, #00d2b4, #00a896)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, boxShadow: "0 4px 24px rgba(0,210,180,0.25)" }}>🌊</div>
           <div>
-            <div style={{ fontWeight: 900, fontSize: 18, letterSpacing: "-0.5px", lineHeight: 1 }}>SWELL.AI</div>
+            <div style={{ fontWeight: 900, fontSize: 18, letterSpacing: "-0.5px", lineHeight: 1 }}>SWELL-AI</div>
             <div style={{ fontSize: 9.5, color: "#00d2b4", fontFamily: "'JetBrains Mono', monospace", letterSpacing: "2px", marginTop: 1 }}>BALI SURF INTELLIGENCE</div>
           </div>
         </div>
@@ -328,7 +328,7 @@ export default function SwellAI() {
                 ))}
               </div>
               <div style={{ background: "linear-gradient(135deg, rgba(0,210,180,0.1), rgba(0,210,180,0.03))", border: "1px solid rgba(0,210,180,0.18)", borderRadius: 14, padding: 18, textAlign: "center" }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#00d2b4", letterSpacing: "0.5px" }}>THE SWELL.AI WAY</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#00d2b4", letterSpacing: "0.5px" }}>THE SWELL-AI WAY</div>
                 <div style={{ fontSize: 15, marginTop: 6, lineHeight: 1.5 }}>Your profile → AI picks the spot → You surf 🤙</div>
               </div>
             </Card>
