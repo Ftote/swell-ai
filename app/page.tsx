@@ -255,10 +255,8 @@ export default function SwellAI() {
           reefComfort: data.reef_comfort,
         };
         setProfile(savedProfile);
-        // Profil complet — aller direct aux résultats
-        const scored = SPOTS.map(s => ({ ...s, ...scoreSpot(s, savedProfile, FORECAST_FALLBACK) })).sort((a, b) => b.score - a.score);
-        setResults(scored);
-        setStep(3);
+        // Profil complet — rediriger vers Daily Brief
+        window.location.href = "/daily-brief";
       }
     };
 
@@ -308,9 +306,7 @@ export default function SwellAI() {
       if (i >= 4) {
         clearInterval(iv);
         setTimeout(() => {
-          const scored = SPOTS.map(s => ({ ...s, ...scoreSpot(s, profile, forecast) })).sort((a, b) => b.score - a.score);
-          setResults(scored);
-          setIsLoading(false);
+          window.location.href = "/daily-brief";
         }, 400);
       }
     }, 500);
