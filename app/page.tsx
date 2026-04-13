@@ -205,6 +205,17 @@ export default function SwellAI() {
   const [forecast, setForecast] = useState<ForecastData>(FORECAST_FALLBACK);
   const [forecastLoading, setForecastLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
+  const [scrollDepth, setScrollDepth] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      const pct = maxScroll > 0 ? Math.min(window.scrollY / maxScroll, 1) : 0;
+      setScrollDepth(pct);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     fetch("/api/forecast")
@@ -288,8 +299,13 @@ export default function SwellAI() {
   return (
     <div style={{
       minHeight: "100vh",
-      background: "linear-gradient(175deg, #060f1a 0%, #081a2a 30%, #0a2438 60%, #0c2e42 100%)",
+      background: `linear-gradient(175deg,
+        hsl(210, 70%, ${12 - scrollDepth * 8}%) 0%,
+        hsl(210, 65%, ${10 - scrollDepth * 7}%) 30%,
+        hsl(210, 60%, ${8 - scrollDepth * 6}%) 60%,
+        hsl(210, 55%, ${6 - scrollDepth * 5}%) 100%)`,
       color: "#dce8f0", position: "relative",
+      transition: "background 0.1s ease",
     }}>
       {/* Grain overlay */}
       <div style={{
