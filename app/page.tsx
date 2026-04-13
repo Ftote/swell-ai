@@ -306,7 +306,7 @@ export default function SwellAI() {
       if (i >= 4) {
         clearInterval(iv);
         setTimeout(() => {
-          window.location.href = "/daily-brief";
+          setIsLoading(false);
         }, 400);
       }
     }, 500);
@@ -523,6 +523,17 @@ export default function SwellAI() {
                 <div style={{ color: "#00d2b4", fontSize: 13, fontWeight: 500 }}>
                   {["Reading swell charts...", "Checking tide tables...", "Cross-referencing your profile...", "Scoring 20+ spots..."][Math.min(Math.floor(loadingProgress / 25), 3)]}
                 </div>
+              </div>
+            ) : !isLoading && step === 3 ? (
+              <div style={{ textAlign: "center", marginTop: 80 }}>
+                <div style={{ fontSize: 56, marginBottom: 20 }}>🤙</div>
+                <h2 style={{ fontSize: 24, fontWeight: 900, letterSpacing: "-0.5px", marginBottom: 10 }}>Profile saved!</h2>
+                <p style={{ color: "#5a8ca8", fontSize: 14, marginBottom: 36, lineHeight: 1.6 }}>
+                  Your surf profile is ready.<br/>Check today&apos;s best spots for you.
+                </p>
+                <a href="/daily-brief" style={{ display: "block", width: "100%", padding: "17px", fontSize: 16, fontWeight: 700, background: "linear-gradient(135deg, #00d2b4, #00a896)", color: "#060f1a", border: "none", borderRadius: 14, cursor: "pointer", boxShadow: "0 8px 36px rgba(0,210,180,0.28)", textDecoration: "none" }}>
+                  View my Daily Brief →
+                </a>
               </div>
             ) : results && (
               <div>
