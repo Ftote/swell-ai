@@ -320,21 +320,29 @@ export default function DailyBrief() {
       <div style={{ maxWidth: 580, margin: "0 auto", padding: "24px 20px 60px", display: activeTab === "map" ? "none" : "block" }}>
 
         {/* Conditions bar */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 6, marginBottom: 28, animation: "fadeUp 0.5s ease" }}>
-          {[
-            { l: "SWELL", v: `${forecast.swellHeight}m`, s: `${forecast.swellPeriod}s ${forecast.swellDir}` },
-            { l: "WIND", v: forecast.wind, s: `${forecast.windSpeed}km/h` },
-            { l: "TIDE", v: forecast.tide.state === "Rising" ? "↗" : "↘", s: forecast.tide.state },
-            { l: "HIGH", v: forecast.tide.nextHigh, s: "" },
-            { l: "WATER", v: `${forecast.waterTemp}°`, s: "Warm" },
-          ].map((m, i) => (
-            <div key={i} style={{ textAlign: "center", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 12, padding: "10px 4px" }}>
-              <div style={{ fontSize: 8, color: "#4a6a7a", fontWeight: 700, letterSpacing: "1px", marginBottom: 4 }}>{m.l}</div>
-              <div style={{ fontSize: 16, fontWeight: 800 }}>{m.v}</div>
-              <div style={{ fontSize: 9, color: "#5a8ca8", marginTop: 2 }}>{m.s}</div>
+        {(() => {
+          const energy = Math.round(0.5 * Math.pow(forecast.swellHeight, 2) * forecast.swellPeriod);
+          const energyLabel = energy < 5 ? "Tiny" : energy < 15 ? "Small" : energy < 30 ? "Medium" : energy < 60 ? "Powerful" : "Massive";
+          return (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 5, marginBottom: 28, animation: "fadeUp 0.5s ease" }}>
+              {[
+                { l: "SWELL", v: `${forecast.swellHeight}m`, s: forecast.swellDir },
+                { l: "PERIOD", v: `${forecast.swellPeriod}s`, s: forecast.swellPeriod >= 14 ? "Ground" : forecast.swellPeriod >= 10 ? "Swell" : "Wind" },
+                { l: "ENERGY", v: `${energy}`, s: "kW/m" },
+                { l: "WIND", v: forecast.wind, s: `${forecast.windSpeed}km/h` },
+                { l: "TIDE", v: forecast.tide.state === "Rising" ? "↗" : "↘", s: forecast.tide.state },
+                { l: "HIGH", v: forecast.tide.nextHigh, s: "" },
+                { l: "WATER", v: `${forecast.waterTemp}°`, s: "Warm" },
+              ].map((m, i) => (
+                <div key={i} style={{ textAlign: "center", background: i === 2 ? "rgba(0,210,180,0.04)" : "rgba(255,255,255,0.03)", border: `1px solid ${i === 2 ? "rgba(0,210,180,0.12)" : "rgba(255,255,255,0.05)"}`, borderRadius: 12, padding: "10px 3px" }}>
+                  <div style={{ fontSize: 7, color: i === 2 ? "#00d2b4" : "#4a6a7a", fontWeight: 700, letterSpacing: "1px", marginBottom: 4 }}>{m.l}</div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: i === 2 ? "#00d2b4" : "#dce8f0" }}>{m.v}</div>
+                  <div style={{ fontSize: 8, color: "#5a8ca8", marginTop: 2 }}>{m.s}</div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          );
+        })()}
 
         {/* Hero — Top spot */}
         {top && (
