@@ -191,6 +191,126 @@ function generateWhyText(spot: ScoredSpot, profile: Profile, forecast: Forecast)
   return sections;
 }
 
+function TideChart({ nextHighStr, tideState }: { nextHighStr: string; tideState: string }) {
+  // Parse "11:30 AM" → minutes from midnight
+  const parseTimeStr = (str: string): number => {
+    const parts = str.trim().split(" ");
+    const [h, m] = parts[0].split(":").map(Number);
+    const ampm = parts[1]?.toUpperCase();
+    let hours = h;
+    if (ampm === "PM" && h !== 12) hours = h + 12;
+    if (ampm === "AM" && h === 12) hours = 0;
+    return hours * 60 + (m || 0);
+  };
+
+  const highMin = parseTimeStr(nextHighStr);
+  // Semi-diurnal: 12h25min period
+  const PERIOD = 745;
+  const MID = 0.9;
+  const AMP = 0.7;
+  const tide = (min: number) => MID + AMP * Math.cos((2 * Math.PI * (min - highMin)) / PERIOD);
+
+  // Bali sunrise/sunset (fixed, minimal variation)
+  const SUNRISE = 6 * 60 + 10;  // 06:10
+  const SUNSET = 18 * 60 + 20;  // 18:20
+
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+
+  const W = 540;
+  const H = 90;
+  const PAD_L = 30;
+  const PAD_R = 10;
+  const PAD_T = 10;
+  const PAD_B = 22;
+  const chartW = W - PAD_L - PAD_R;
+  const chartH = H - PAD_T - PAD_B;
+  const maxH = MID + AMP + 0.1;
+
+  const toX = (min: number) => PAD_L + ((min - SUNRISE) / (SUNSET - SUNRISE)) * chartW;
+  const toY = (h: number) => PAD_T + chartH - (h / maxH) * chartH;
+
+  // Generate smooth path (every 10 min)
+  const pts: [number, number][] = [];
+  for (let t = SUNRISE; t <= SUNSET; t += 10) {
+    pts.push([toX(t), toY(tide(t))]);
+  }
+  const linePath = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
+  const fillPath = `${linePath} L${toX(SUNSET).toFixed(1)},${(PAD_T + chartH).toFixed(1)} L${PAD_L},${(PAD_T + chartH).toFixed(1)} Z`;
+
+  // Current time (clamp inside chart)
+  const nowClamped = Math.max(SUNRISE, Math.min(SUNSET, nowMin));
+  const nowX = toX(nowClamped);
+  const nowTideH = tide(nowClamped);
+  const nowY = toY(nowTideH);
+
+  // Hour ticks every 3h
+  const ticks: number[] = [];
+  for (let t = Math.ceil(SUNRISE / 60) * 60; t <= SUNSET; t += 180) ticks.push(t);
+
+  // Y-axis labels
+  const yMarks = [0, 0.5, 1.0, 1.5];
+
+  return (
+    <div style={{ marginBottom: 24, animation: "fadeUp 0.5s ease 0.05s both" }}>
+      <div style={{ fontSize: 9.5, fontWeight: 700, color: "#4a6a7a", letterSpacing: "2px", fontFamily: "monospace", marginBottom: 8 }}>
+        TIDE TODAY
+      </div>
+      <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "14px 12px 8px", overflow: "hidden" }}>
+        <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block" }}>
+          {/* Y-axis grid lines + labels */}
+          {yMarks.map(m => {
+            const y = toY(m);
+            if (y < PAD_T || y > PAD_T + chartH) return null;
+            return (
+              <g key={m}>
+                <line x1={PAD_L} y1={y} x2={PAD_L + chartW} y2={y} stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
+                <text x={PAD_L - 4} y={y + 3.5} textAnchor="end" fontSize="8" fill="rgba(90,140,168,0.7)">{m}m</text>
+              </g>
+            );
+          })}
+
+          {/* Filled area under curve */}
+          <path d={fillPath} fill="rgba(0,210,180,0.07)" />
+
+          {/* Tide curve */}
+          <path d={linePath} fill="none" stroke="#00d2b4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+
+          {/* Current time line */}
+          {nowMin >= SUNRISE && nowMin <= SUNSET && (
+            <g>
+              <line x1={nowX} y1={PAD_T} x2={nowX} y2={PAD_T + chartH} stroke="rgba(255,255,255,0.15)" strokeWidth="1" strokeDasharray="3,3" />
+              <circle cx={nowX} cy={nowY} r="4" fill="#00d2b4" stroke="#060f1a" strokeWidth="1.5" />
+              <text x={nowX} y={nowY - 8} textAnchor="middle" fontSize="8.5" fontWeight="700" fill="#00d2b4">{nowTideH.toFixed(1)}m</text>
+            </g>
+          )}
+
+          {/* Hour ticks */}
+          {ticks.map(t => {
+            const x = toX(t);
+            const h = t / 60;
+            const label = h < 12 ? `${h}am` : h === 12 ? "12pm" : `${h - 12}pm`;
+            return (
+              <g key={t}>
+                <line x1={x} y1={PAD_T + chartH} x2={x} y2={PAD_T + chartH + 4} stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+                <text x={x} y={PAD_T + chartH + 13} textAnchor="middle" fontSize="8" fill="rgba(90,140,168,0.6)">{label}</text>
+              </g>
+            );
+          })}
+
+          {/* Sunrise label */}
+          <text x={PAD_L} y={PAD_T + chartH + 13} textAnchor="middle" fontSize="9" fill="rgba(245,166,35,0.7)">🌅</text>
+          <text x={PAD_L} y={PAD_T + chartH + 21} textAnchor="middle" fontSize="7" fill="rgba(90,140,168,0.5)">6:10</text>
+
+          {/* Sunset label */}
+          <text x={PAD_L + chartW} y={PAD_T + chartH + 13} textAnchor="middle" fontSize="9" fill="rgba(245,166,35,0.7)">🌇</text>
+          <text x={PAD_L + chartW} y={PAD_T + chartH + 21} textAnchor="middle" fontSize="7" fill="rgba(90,140,168,0.5)">18:20</text>
+        </svg>
+      </div>
+    </div>
+  );
+}
+
 export default function DailyBrief() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [forecast, setForecast] = useState<Forecast>(FALLBACK_FORECAST);
@@ -344,6 +464,9 @@ export default function DailyBrief() {
             </div>
           );
         })()}
+
+        {/* Tide chart */}
+        <TideChart nextHighStr={forecast.tide.nextHigh} tideState={forecast.tide.state} />
 
         {/* Hero — Top spot */}
         {top && (
