@@ -216,6 +216,7 @@ export default function SwellAI() {
   const [anim, setAnim] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [authChecking, setAuthChecking] = useState(true);
   const [forecast, setForecast] = useState<ForecastData>(FORECAST_FALLBACK);
   const [forecastLoading, setForecastLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
@@ -260,9 +261,12 @@ export default function SwellAI() {
       }
     };
 
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then(async ({ data }) => {
       setUser(data.user);
-      if (data.user) loadProfile(data.user.id);
+      if (data.user) {
+        await loadProfile(data.user.id);
+      }
+      setAuthChecking(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -313,6 +317,15 @@ export default function SwellAI() {
   };
 
   const filteredResults = results?.filter(r => zoneFilter === "All Bali" || r.zone === zoneFilter);
+
+  if (authChecking) return (
+    <div style={{ minHeight: "100vh", background: "#060f1a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ textAlign: "center" }}>
+        <div style={{ fontSize: 36, marginBottom: 16 }}>🌊</div>
+        <div style={{ color: "#00d2b4", fontSize: 13, fontFamily: "'JetBrains Mono', monospace", letterSpacing: "2px" }}>LOADING...</div>
+      </div>
+    </div>
+  );
 
   return (
     <div style={{
