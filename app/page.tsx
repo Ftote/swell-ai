@@ -214,9 +214,32 @@ export default function SwellAI() {
       .finally(() => setForecastLoading(false));
 
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+
+    const loadProfile = async (userId: string) => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", userId)
+        .single();
+      if (data) {
+        setProfile({
+          level: data.level,
+          board: data.board,
+          stance: data.stance,
+          crowdPref: data.crowd_pref,
+          reefComfort: data.reef_comfort,
+        });
+      }
+    };
+
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+      if (data.user) loadProfile(data.user.id);
+    });
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      if (session?.user) loadProfile(session.user.id);
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -226,10 +249,25 @@ export default function SwellAI() {
     setTimeout(() => { setStep(s); setAnim(true); }, 250);
   };
 
-  const analyze = () => {
+  const analyze = async () => {
     setIsLoading(true);
     setLoadingProgress(0);
     go(3);
+
+    // Save profile to Supabase if logged in
+    if (user) {
+      const supabase = createClient();
+      await supabase.from("profiles").upsert({
+        user_id: user.id,
+        level: profile.level,
+        board: profile.board,
+        stance: profile.stance,
+        crowd_pref: profile.crowdPref,
+        reef_comfort: profile.reefComfort,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "user_id" });
+    }
+
     let i = 0;
     const iv = setInterval(() => {
       i++;
