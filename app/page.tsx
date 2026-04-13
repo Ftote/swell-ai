@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // ============================================================
 // BALI SPOTS DATABASE
@@ -37,10 +37,21 @@ const STANCES = ["Regular", "Goofy", "Not sure"];
 const CROWD_PREFS = ["Don't mind crowds", "Less crowded preferred", "Empty lineup or nothing"];
 const REEF_COMFORTS = ["Sand only please", "Reef is fine with booties", "Reef no problem"];
 
-const FORECASTS = {
-  south: { swellHeight: 1.6, swellPeriod: 13, swellDir: "S", wind: "SE", windSpeed: 10 },
+interface ForecastData {
+  swellHeight: number;
+  swellPeriod: number;
+  swellDir: string;
+  wind: string;
+  windSpeed: number;
+  waterTemp: number;
+  tide: { state: string; height: string; nextHigh: string };
+  fetchedAt?: string;
+}
+
+const FORECAST_FALLBACK: ForecastData = {
+  swellHeight: 1.6, swellPeriod: 13, swellDir: "S", wind: "SE", windSpeed: 10,
+  waterTemp: 28, tide: { state: "Rising", height: "mid", nextHigh: "11:30 AM" },
 };
-const TIDE_NOW = { state: "Rising", height: "mid", nextHigh: "11:30 AM" };
 
 // ============================================================
 // TYPES
@@ -61,12 +72,12 @@ type ScoredSpot = Spot & ScoreResult;
 // ============================================================
 // SCORING ENGINE
 // ============================================================
-function scoreSpot(spot: Spot, profile: Profile): ScoreResult {
+function scoreSpot(spot: Spot, profile: Profile, forecast: ForecastData): ScoreResult {
   let score = 0;
   const reasons: string[] = [];
   const warnings: string[] = [];
-  const fc = FORECASTS.south;
-  const tide = TIDE_NOW;
+  const fc = forecast;
+  const tide = forecast.tide;
   const level = profile.level ?? 1;
 
   const diff = spot.level - level;
@@ -123,8 +134,8 @@ function scoreSpot(spot: Spot, profile: Profile): ScoreResult {
 
   let boardTip = "";
   if (level === 1) boardTip = "Stick to your biggest, most buoyant board for maximum wave count.";
-  else if (fc.swellHeight > 1.5 && spot.type === "Reef break") boardTip = "Conditions are solid — your shortboard or fish will work. Consider reef booties.";
-  else if (fc.swellHeight <= 1.0) boardTip = "Small day vibes — grab a longboard or funboard to maximize fun.";
+  else if (forecast.swellHeight > 1.5 && spot.type === "Reef break") boardTip = "Conditions are solid — your shortboard or fish will work. Consider reef booties.";
+  else if (forecast.swellHeight <= 1.0) boardTip = "Small day vibes — grab a longboard or funboard to maximize fun.";
   else boardTip = "Your go-to board should work great here today.";
 
   return { score: pct, reasons: reasons.slice(0, 4), warnings, boardTip };
@@ -189,6 +200,16 @@ export default function SwellAI() {
   const [anim, setAnim] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [forecast, setForecast] = useState<ForecastData>(FORECAST_FALLBACK);
+  const [forecastLoading, setForecastLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/forecast")
+      .then(r => r.json())
+      .then(data => { if (!data.error) setForecast(data); })
+      .catch(() => {})
+      .finally(() => setForecastLoading(false));
+  }, []);
 
   const go = (s: number) => {
     setAnim(false);
@@ -206,7 +227,7 @@ export default function SwellAI() {
       if (i >= 4) {
         clearInterval(iv);
         setTimeout(() => {
-          const scored = SPOTS.map(s => ({ ...s, ...scoreSpot(s, profile) })).sort((a, b) => b.score - a.score);
+          const scored = SPOTS.map(s => ({ ...s, ...scoreSpot(s, profile, forecast) })).sort((a, b) => b.score - a.score);
           setResults(scored);
           setIsLoading(false);
         }, 400);
@@ -289,7 +310,7 @@ export default function SwellAI() {
             </Card>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 24 }}>
-              {[{ v: "20+", l: "Bali spots" }, { v: "Real-time", l: "Forecast data" }, { v: "AI", l: "Personalized" }].map((s, i) => (
+              {[{ v: "20+", l: "Bali spots" }, { v: forecastLoading ? "..." : "Live", l: "Forecast data" }, { v: "AI", l: "Personalized" }].map((s, i) => (
                 <div key={i} style={{ textAlign: "center", padding: "14px 8px", borderRadius: 12, background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.05)" }}>
                   <div style={{ fontSize: 18, fontWeight: 800, color: "#00d2b4" }}>{s.v}</div>
                   <div style={{ fontSize: 10, color: "#5a8ca8", marginTop: 2 }}>{s.l}</div>
@@ -401,11 +422,11 @@ export default function SwellAI() {
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8 }}>
                     {[
-                      { l: "Swell", v: `${FORECASTS.south.swellHeight}m`, s: FORECASTS.south.swellDir },
-                      { l: "Wind", v: FORECASTS.south.wind, s: `${FORECASTS.south.windSpeed} km/h` },
-                      { l: "Tide", v: "↗", s: TIDE_NOW.state },
-                      { l: "High", v: TIDE_NOW.nextHigh, s: "" },
-                      { l: "Water", v: "28°C", s: "Warm" },
+                      { l: "Swell", v: `${forecast.swellHeight}m`, s: `${forecast.swellPeriod}s ${forecast.swellDir}` },
+                      { l: "Wind", v: forecast.wind, s: `${forecast.windSpeed} km/h` },
+                      { l: "Tide", v: forecast.tide.state === "Rising" ? "↗" : "↘", s: forecast.tide.state },
+                      { l: "High", v: forecast.tide.nextHigh, s: "" },
+                      { l: "Water", v: `${forecast.waterTemp}°C`, s: "Warm" },
                     ].map((m, i) => (
                       <div key={i} style={{ textAlign: "center" }}>
                         <div style={{ fontSize: 9, color: "#4a6a7a", fontWeight: 600, marginBottom: 3 }}>{m.l}</div>
