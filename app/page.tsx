@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase";
+import type { User } from "@supabase/supabase-js";
 
 // ============================================================
 // BALI SPOTS DATABASE
@@ -202,6 +204,7 @@ export default function SwellAI() {
   const [isLoading, setIsLoading] = useState(false);
   const [forecast, setForecast] = useState<ForecastData>(FORECAST_FALLBACK);
   const [forecastLoading, setForecastLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     fetch("/api/forecast")
@@ -209,6 +212,13 @@ export default function SwellAI() {
       .then(data => { if (!data.error) setForecast(data); })
       .catch(() => {})
       .finally(() => setForecastLoading(false));
+
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
   const go = (s: number) => {
@@ -265,9 +275,23 @@ export default function SwellAI() {
             <div style={{ fontSize: 9.5, color: "#00d2b4", fontFamily: "'JetBrains Mono', monospace", letterSpacing: "2px", marginTop: 1 }}>BALI SURF INTELLIGENCE</div>
           </div>
         </div>
-        {step > 0 && step < 3 && (
-          <button onClick={() => go(step - 1)} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#6a9ab8", borderRadius: 10, padding: "7px 14px", cursor: "pointer", fontSize: 12, fontWeight: 500 }}>← Back</button>
-        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {step > 0 && step < 3 && (
+            <button onClick={() => go(step - 1)} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#6a9ab8", borderRadius: 10, padding: "7px 14px", cursor: "pointer", fontSize: 12, fontWeight: 500 }}>← Back</button>
+          )}
+          {user ? (
+            <button onClick={async () => { await createClient().auth.signOut(); setUser(null); }} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#6a9ab8", borderRadius: 10, padding: "7px 14px", cursor: "pointer", fontSize: 12, fontWeight: 500, display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ width: 22, height: 22, borderRadius: "50%", background: "linear-gradient(135deg, #00d2b4, #00a896)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: "#060f1a", fontWeight: 700 }}>
+                {(user.email ?? "?")[0].toUpperCase()}
+              </span>
+              Sign out
+            </button>
+          ) : (
+            <a href="/auth" style={{ background: "linear-gradient(135deg, #00d2b4, #00a896)", color: "#060f1a", borderRadius: 10, padding: "7px 14px", fontSize: 12, fontWeight: 700, textDecoration: "none" }}>
+              Sign in
+            </a>
+          )}
+        </div>
       </header>
 
       {/* CONTENT */}
