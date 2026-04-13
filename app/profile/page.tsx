@@ -55,6 +55,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -105,8 +106,9 @@ export default function ProfilePage() {
   const save = async () => {
     if (!user) return;
     setSaving(true);
+    setSaveError(null);
     const supabase = createClient();
-    await supabase.from("profiles").upsert({
+    const { error } = await supabase.from("profiles").upsert({
       id: user.id,
       level: profile.level,
       boards: profile.boards,
@@ -118,8 +120,12 @@ export default function ProfilePage() {
       updated_at: new Date().toISOString(),
     }, { onConflict: "id" });
     setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    if (error) {
+      setSaveError(error.message);
+    } else {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    }
   };
 
   const signOut = async () => {
@@ -273,8 +279,14 @@ export default function ProfilePage() {
           {saved ? "✓ Saved!" : saving ? "Saving..." : "Save changes"}
         </button>
 
-        <a href="/" style={{ display: "block", textAlign: "center", marginTop: 16, fontSize: 13, color: "#5a8ca8", textDecoration: "none" }}>
-          ← Back to surf recommendations
+        {saveError && (
+          <div style={{ marginTop: 12, padding: "10px 14px", borderRadius: 10, background: "rgba(255,107,107,0.08)", border: "1px solid rgba(255,107,107,0.2)", color: "#ff8a8a", fontSize: 12 }}>
+            ⚠️ Error: {saveError}
+          </div>
+        )}
+
+        <a href="/daily-brief" style={{ display: "block", textAlign: "center", marginTop: 16, fontSize: 13, color: "#5a8ca8", textDecoration: "none" }}>
+          ← Ready for your Daily Brief
         </a>
 
       </div>
