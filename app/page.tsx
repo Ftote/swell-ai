@@ -353,12 +353,12 @@ export default function SwellAI() {
             <button onClick={() => go(step - 1)} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#6a9ab8", borderRadius: 10, padding: "7px 14px", cursor: "pointer", fontSize: 12, fontWeight: 500 }}>← Back</button>
           )}
           {user ? (
-            <button onClick={async () => { await createClient().auth.signOut(); setUser(null); }} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#6a9ab8", borderRadius: 10, padding: "7px 14px", cursor: "pointer", fontSize: 12, fontWeight: 500, display: "flex", alignItems: "center", gap: 6 }}>
+            <a href="/profile" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#6a9ab8", borderRadius: 10, padding: "7px 14px", cursor: "pointer", fontSize: 12, fontWeight: 500, display: "flex", alignItems: "center", gap: 6, textDecoration: "none" }}>
               <span style={{ width: 22, height: 22, borderRadius: "50%", background: "linear-gradient(135deg, #00d2b4, #00a896)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: "#060f1a", fontWeight: 700 }}>
                 {(user.email ?? "?")[0].toUpperCase()}
               </span>
-              Sign out
-            </button>
+              Profile
+            </a>
           ) : (
             <a href="/auth" style={{ background: "linear-gradient(135deg, #00d2b4, #00a896)", color: "#060f1a", borderRadius: 10, padding: "7px 14px", fontSize: 12, fontWeight: 700, textDecoration: "none" }}>
               Sign in
