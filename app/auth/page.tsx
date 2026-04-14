@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase";
+import SwellLogo from "@/components/SwellLogo";
 
 export default function AuthPage() {
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -52,7 +53,7 @@ export default function AuthPage() {
         {/* Logo */}
         <div style={{ textAlign: "center", marginBottom: 40 }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-            <div style={{ width: 38, height: 38, borderRadius: 10, background: "linear-gradient(135deg, #00d2b4, #00a896)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🌊</div>
+            <SwellLogo size={38} />
             <div style={{ fontWeight: 900, fontSize: 22, letterSpacing: "-0.5px" }}>SWELL-AI</div>
           </div>
           <div style={{ fontSize: 14, color: "#5a8ca8" }}>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
+import SwellLogo from "@/components/SwellLogo";
 import type { User } from "@supabase/supabase-js";
 
 // ============================================================
@@ -315,7 +316,7 @@ export default function SwellAI() {
   if (authChecking) return (
     <div style={{ minHeight: "100vh", background: "#060f1a", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{ textAlign: "center" }}>
-        <div style={{ fontSize: 36, marginBottom: 16 }}>🌊</div>
+        <div style={{ marginBottom: 16 }}><SwellLogo size={48} /></div>
         <div style={{ color: "#00d2b4", fontSize: 13, fontFamily: "'JetBrains Mono', monospace", letterSpacing: "2px" }}>LOADING...</div>
       </div>
     </div>
@@ -348,7 +349,7 @@ export default function SwellAI() {
       {/* HEADER */}
       <header style={{ padding: "20px 24px", position: "relative", zIndex: 10, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 38, height: 38, borderRadius: 10, background: "linear-gradient(135deg, #00d2b4, #00a896)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, boxShadow: "0 4px 24px rgba(0,210,180,0.25)" }}>🌊</div>
+          <SwellLogo size={38} />
           <div>
             <div style={{ fontWeight: 900, fontSize: 18, letterSpacing: "-0.5px", lineHeight: 1 }}>SWELL-AI</div>
             <div style={{ fontSize: 9.5, color: "#00d2b4", fontFamily: "'JetBrains Mono', monospace", letterSpacing: "2px", marginTop: 1 }}>GLOBAL SURF INTELLIGENCE</div>

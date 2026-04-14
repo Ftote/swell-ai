@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
+import SwellLogo from "@/components/SwellLogo";
 
 const LEVELS = [
   { value: 1, label: "Beginner", emoji: "🟢", desc: "Catching whitewash, first green waves" },
@@ -148,7 +149,7 @@ export default function ProfilePage() {
       {/* Header */}
       <header style={{ padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <a href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", color: "inherit" }}>
-          <div style={{ width: 38, height: 38, borderRadius: 10, background: "linear-gradient(135deg, #00d2b4, #00a896)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🌊</div>
+          <SwellLogo size={38} />
           <div>
             <div style={{ fontWeight: 900, fontSize: 18, letterSpacing: "-0.5px", lineHeight: 1 }}>SWELL-AI</div>
             <div style={{ fontSize: 9.5, color: "#00d2b4", fontFamily: "'JetBrains Mono', monospace", letterSpacing: "2px", marginTop: 1 }}>GLOBAL SURF INTELLIGENCE</div>

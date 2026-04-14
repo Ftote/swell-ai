@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { createClient } from "@/lib/supabase";
+import SwellLogo from "@/components/SwellLogo";
 
 const SpotMap = dynamic(() => import("./SpotMap"), { ssr: false });
 
@@ -491,7 +492,7 @@ export default function DailyBrief() {
       <header style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(6,15,26,0.92)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         <div style={{ padding: "14px 24px 0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <a href="/daily-brief" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", color: "inherit" }}>
-            <div style={{ width: 34, height: 34, borderRadius: 9, background: "linear-gradient(135deg, #00d2b4, #00a896)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>🌊</div>
+            <SwellLogo size={34} />
             <div>
               <div style={{ fontWeight: 900, fontSize: 16, letterSpacing: "-0.5px", lineHeight: 1 }}>SWELL-AI</div>
               <div style={{ fontSize: 8, color: "#00d2b4", fontFamily: "monospace", letterSpacing: "2px" }}>DAILY BRIEF</div>
