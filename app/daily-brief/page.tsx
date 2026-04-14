@@ -234,7 +234,7 @@ function WindChart({ hourlyWind }: { hourlyWind: HourlyWind[] }) {
             return (
               <g key={spd}>
                 <line x1={PAD_L} y1={y} x2={PAD_L + chartW} y2={y} stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
-                <text x={PAD_L - 4} y={y + 3.5} textAnchor="end" fontSize="8" fill="rgba(90,140,168,0.6)">{spd}</text>
+                <text x={PAD_L - 4} y={y + 3.5} textAnchor="end" fontSize="10" fill="rgba(90,140,168,0.7)">{spd}</text>
               </g>
             );
           })}
@@ -261,13 +261,13 @@ function WindChart({ hourlyWind }: { hourlyWind: HourlyWind[] }) {
                   <polygon points="0,-7 -2.5,-3 2.5,-3" fill={color} opacity={isNow ? 1 : 0.7} />
                 </g>
                 {/* Hour label */}
-                <text x={cx} y={PAD_T + chartH + 11} textAnchor="middle" fontSize="7" fill={isNow ? "#dce8f0" : "rgba(90,140,168,0.55)"}>
+                <text x={cx} y={PAD_T + chartH + 12} textAnchor="middle" fontSize="9" fill={isNow ? "#dce8f0" : "rgba(90,140,168,0.65)"}>
                   {h.hour < 12 ? `${h.hour}` : h.hour === 12 ? "12" : `${h.hour - 12}`}
-                  <tspan fontSize="6">{h.hour < 12 ? "am" : "pm"}</tspan>
+                  <tspan fontSize="7">{h.hour < 12 ? "am" : "pm"}</tspan>
                 </text>
                 {/* Speed label on current hour */}
                 {isNow && (
-                  <text x={cx} y={y - 18} textAnchor="middle" fontSize="8" fontWeight="700" fill={color}>{h.speed}km/h</text>
+                  <text x={cx} y={y - 18} textAnchor="middle" fontSize="10" fontWeight="700" fill={color}>{h.speed}km/h</text>
                 )}
               </g>
             );
@@ -281,10 +281,10 @@ function WindChart({ hourlyWind }: { hourlyWind: HourlyWind[] }) {
           })}
 
           {/* Legend */}
-          <text x={PAD_L} y={PAD_T + chartH + 22} fontSize="7" fill={QUALITY_COLORS.offshore}>● offshore</text>
-          <text x={PAD_L + 55} y={PAD_T + chartH + 22} fontSize="7" fill={QUALITY_COLORS.cross}>● cross</text>
-          <text x={PAD_L + 95} y={PAD_T + chartH + 22} fontSize="7" fill={QUALITY_COLORS.onshore}>● onshore</text>
-          <text x={PAD_L + chartW} y={PAD_T + chartH + 22} textAnchor="end" fontSize="7" fill="rgba(90,140,168,0.5)">km/h</text>
+          <text x={PAD_L} y={PAD_T + chartH + 24} fontSize="9" fill={QUALITY_COLORS.offshore}>● offshore</text>
+          <text x={PAD_L + 66} y={PAD_T + chartH + 24} fontSize="9" fill={QUALITY_COLORS.cross}>● cross</text>
+          <text x={PAD_L + 116} y={PAD_T + chartH + 24} fontSize="9" fill={QUALITY_COLORS.onshore}>● onshore</text>
+          <text x={PAD_L + chartW} y={PAD_T + chartH + 24} textAnchor="end" fontSize="9" fill="rgba(90,140,168,0.5)">km/h</text>
         </svg>
       </div>
     </div>
@@ -365,7 +365,7 @@ function TideChart({ nextHighStr, tideState }: { nextHighStr: string; tideState:
             return (
               <g key={m}>
                 <line x1={PAD_L} y1={y} x2={PAD_L + chartW} y2={y} stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
-                <text x={PAD_L - 4} y={y + 3.5} textAnchor="end" fontSize="8" fill="rgba(90,140,168,0.7)">{m}m</text>
+                <text x={PAD_L - 4} y={y + 3.5} textAnchor="end" fontSize="10" fill="rgba(90,140,168,0.8)">{m}m</text>
               </g>
             );
           })}
@@ -381,7 +381,7 @@ function TideChart({ nextHighStr, tideState }: { nextHighStr: string; tideState:
             <g>
               <line x1={nowX} y1={PAD_T} x2={nowX} y2={PAD_T + chartH} stroke="rgba(255,255,255,0.15)" strokeWidth="1" strokeDasharray="3,3" />
               <circle cx={nowX} cy={nowY} r="4" fill="#00d2b4" stroke="#060f1a" strokeWidth="1.5" />
-              <text x={nowX} y={nowY - 8} textAnchor="middle" fontSize="8.5" fontWeight="700" fill="#00d2b4">{nowTideH.toFixed(1)}m</text>
+              <text x={nowX} y={nowY - 8} textAnchor="middle" fontSize="11" fontWeight="700" fill="#00d2b4">{nowTideH.toFixed(1)}m</text>
             </g>
           )}
 
@@ -397,18 +397,18 @@ function TideChart({ nextHighStr, tideState }: { nextHighStr: string; tideState:
             return (
               <g key={t}>
                 <line x1={x} y1={PAD_T + chartH} x2={x} y2={PAD_T + chartH + 3} stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
-                <text x={x} y={PAD_T + chartH + 11} textAnchor="middle" fontSize="7" fill="rgba(90,140,168,0.55)">{label}<tspan fontSize="6">{ampm}</tspan></text>
+                <text x={x} y={PAD_T + chartH + 12} textAnchor="middle" fontSize="9" fill="rgba(90,140,168,0.7)">{label}<tspan fontSize="7">{ampm}</tspan></text>
               </g>
             );
           })}
 
           {/* Sunrise */}
-          <text x={PAD_L} y={PAD_T + chartH + 11} textAnchor="middle" fontSize="7.5" fill="rgba(245,166,35,0.8)">6:10</text>
-          <text x={PAD_L} y={PAD_T + chartH + 22} textAnchor="middle" fontSize="11">🌅</text>
+          <text x={PAD_L} y={PAD_T + chartH + 12} textAnchor="middle" fontSize="9" fill="rgba(245,166,35,0.9)">6:10</text>
+          <text x={PAD_L} y={PAD_T + chartH + 24} textAnchor="middle" fontSize="13">🌅</text>
 
           {/* Sunset */}
-          <text x={PAD_L + chartW} y={PAD_T + chartH + 11} textAnchor="middle" fontSize="7.5" fill="rgba(245,166,35,0.8)">18:20</text>
-          <text x={PAD_L + chartW} y={PAD_T + chartH + 22} textAnchor="middle" fontSize="11">🌇</text>
+          <text x={PAD_L + chartW} y={PAD_T + chartH + 12} textAnchor="middle" fontSize="9" fill="rgba(245,166,35,0.9)">18:20</text>
+          <text x={PAD_L + chartW} y={PAD_T + chartH + 24} textAnchor="middle" fontSize="13">🌇</text>
         </svg>
       </div>
     </div>
@@ -426,6 +426,7 @@ export default function DailyBrief() {
   const [activeTab, setActiveTab] = useState<"call" | "map">("call");
   const [username, setUsername] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [spotForecasts, setSpotForecasts] = useState<Record<string, Forecast>>({});
 
   useEffect(() => {
     const supabase = createClient();
@@ -461,6 +462,22 @@ export default function DailyBrief() {
       const scored = SPOTS.map(s => ({ ...s, ...scoreSpot(s, prof!, fc) })).sort((a, b) => b.score - a.score);
       setSpots(scored);
       setLoading(false);
+
+      // Fetch spot-specific forecasts for top 3 spots (parallel, each cached 24h on server)
+      const top3 = scored.slice(0, 3);
+      const sfEntries = await Promise.all(
+        top3.map(async (s) => {
+          try {
+            const r = await fetch(`/api/forecast?lat=${s.lat}&lng=${s.lng}`);
+            const d = await r.json();
+            if (!d.error) return [s.id, d] as [string, Forecast];
+          } catch {}
+          return [s.id, fc] as [string, Forecast];
+        })
+      );
+      const sfMap: Record<string, Forecast> = {};
+      sfEntries.forEach(([id, f]) => { sfMap[id] = f; });
+      setSpotForecasts(sfMap);
 
       // Animate board recommendation
       setTimeout(() => setBoardPulse(true), 800);
@@ -545,20 +562,21 @@ export default function DailyBrief() {
 
         {/* ===== TODAY'S CALL ===== */}
         {top && (() => {
-          const energyKj = Math.round(0.49 * Math.pow(forecast.swellHeight, 2) * Math.pow(forecast.swellPeriod, 2));
+          const spotFc = spotForecasts[top.id] ?? forecast;
+          const energyKj = Math.round(0.49 * Math.pow(spotFc.swellHeight, 2) * Math.pow(spotFc.swellPeriod, 2));
           const energyDisplay = energyKj >= 1000 ? `${(energyKj / 1000).toFixed(1)}MJ` : `${energyKj}kJ`;
 
           // Interpret conditions for this specific spot
-          const swellOk = forecast.swellHeight >= top.minSwell && forecast.swellHeight <= top.maxSwell;
+          const swellOk = spotFc.swellHeight >= top.minSwell && spotFc.swellHeight <= top.maxSwell;
           const swellColor = swellOk ? "#00d2b4" : "#f5a623";
-          const swellStatus = swellOk ? "In range" : forecast.swellHeight < top.minSwell ? "Small" : "Big";
+          const swellStatus = swellOk ? "In range" : spotFc.swellHeight < top.minSwell ? "Small" : "Big";
 
-          const windOffshore = forecast.wind === top.idealWind;
-          const windLight = forecast.windSpeed < 8;
+          const windOffshore = spotFc.wind === top.idealWind;
+          const windLight = spotFc.windSpeed < 8;
           const windColor = windOffshore ? "#00d2b4" : windLight ? "#f5a623" : "#ff6b6b";
           const windStatus = windOffshore ? "Offshore" : windLight ? "Light" : "Onshore";
 
-          const tideOk = top.tideReq === "all" || top.tideReq.includes(forecast.tide.height);
+          const tideOk = top.tideReq === "all" || top.tideReq.includes(spotFc.tide.height);
           const tideColor = tideOk ? "#00d2b4" : "#f5a623";
           const tideStatus = tideOk ? "Good" : `Best ${top.tideReq}`;
 
@@ -601,20 +619,20 @@ export default function DailyBrief() {
                 {/* Conditions for this spot */}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, padding: "16px 22px" }}>
                   {[
-                    { l: "SWELL", v: `${forecast.swellHeight}m`, s: swellStatus, c: swellColor, sub: `${forecast.swellPeriod}s · ${forecast.swellDir}` },
+                    { l: "SWELL", v: `${spotFc.swellHeight}m`, s: swellStatus, c: swellColor, sub: `${spotFc.swellPeriod}s · ${spotFc.swellDir}` },
                     { l: "ENERGY", v: energyDisplay, s: "today", c: "#8ab4cc", sub: `${top.minSwell}–${top.maxSwell}m range` },
-                    { l: "WIND", v: forecast.wind, s: windStatus, c: windColor, sub: `${forecast.windSpeed}km/h` },
-                    { l: "TIDE", v: forecast.tide.state === "Rising" ? "↗" : "↘", s: tideStatus, c: tideColor, sub: `High ${forecast.tide.nextHigh}` },
+                    { l: "WIND", v: spotFc.wind, s: windStatus, c: windColor, sub: `${spotFc.windSpeed} km/h` },
+                    { l: "TIDE", v: spotFc.tide.state === "Rising" ? "↗" : "↘", s: tideStatus, c: tideColor, sub: `High ${spotFc.tide.nextHigh}` },
                   ].map((m, i) => (
                     <div key={i} style={{
-                      textAlign: "center", borderRadius: 12, padding: "10px 6px",
+                      textAlign: "center", borderRadius: 12, padding: "12px 6px",
                       background: `${m.c}10`,
                       border: `1px solid ${m.c}25`,
                     }}>
-                      <div style={{ fontSize: 7.5, color: "#4a6a7a", fontWeight: 700, letterSpacing: "1px", marginBottom: 4 }}>{m.l}</div>
-                      <div style={{ fontSize: 17, fontWeight: 900, color: m.c, lineHeight: 1 }}>{m.v}</div>
-                      <div style={{ fontSize: 9, fontWeight: 700, color: m.c, marginTop: 3, opacity: 0.9 }}>{m.s}</div>
-                      <div style={{ fontSize: 8, color: "#4a6a7a", marginTop: 2 }}>{m.sub}</div>
+                      <div style={{ fontSize: 9, color: "#4a6a7a", fontWeight: 700, letterSpacing: "1px", marginBottom: 5 }}>{m.l}</div>
+                      <div style={{ fontSize: 22, fontWeight: 900, color: m.c, lineHeight: 1 }}>{m.v}</div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: m.c, marginTop: 4, opacity: 0.9 }}>{m.s}</div>
+                      <div style={{ fontSize: 10, color: "#5a8ca8", marginTop: 3 }}>{m.sub}</div>
                     </div>
                   ))}
                 </div>
@@ -633,10 +651,10 @@ export default function DailyBrief() {
 
                 {/* Wind + Tide charts inside the card */}
                 <div style={{ padding: "0 14px 4px" }}>
-                  {forecast.hourlyWind && forecast.hourlyWind.length > 0 && (
-                    <WindChart hourlyWind={forecast.hourlyWind} />
+                  {spotFc.hourlyWind && spotFc.hourlyWind.length > 0 && (
+                    <WindChart hourlyWind={spotFc.hourlyWind} />
                   )}
-                  <TideChart nextHighStr={forecast.tide.nextHigh} tideState={forecast.tide.state} />
+                  <TideChart nextHighStr={spotFc.tide.nextHigh} tideState={spotFc.tide.state} />
                 </div>
 
                 {/* Why button */}
@@ -699,20 +717,21 @@ export default function DailyBrief() {
             { spot: spots[2], label: "3RD CALL", icon: "◇" },
           ].filter(({ spot }) => !!spot).map(({ spot, label, icon }) => {
             const isOpen = expanded === spot.id;
+            const sf = spotForecasts[spot.id] ?? forecast;
 
             // Spot-specific condition interpretation
-            const sOk = forecast.swellHeight >= spot.minSwell && forecast.swellHeight <= spot.maxSwell;
+            const sOk = sf.swellHeight >= spot.minSwell && sf.swellHeight <= spot.maxSwell;
             const sColor = sOk ? "#00d2b4" : "#f5a623";
-            const sStatus = sOk ? "In range" : forecast.swellHeight < spot.minSwell ? "Too small" : "Too big";
+            const sStatus = sOk ? "In range" : sf.swellHeight < spot.minSwell ? "Too small" : "Too big";
 
-            const wOffshore = forecast.wind === spot.idealWind;
-            const wLight = forecast.windSpeed < 8;
+            const wOffshore = sf.wind === spot.idealWind;
+            const wLight = sf.windSpeed < 8;
             const wColor = wOffshore ? "#00d2b4" : wLight ? "#f5a623" : "#ff6b6b";
             const wStatus = wOffshore ? "Offshore ✓" : wLight ? "Light" : "Onshore";
 
-            const tOk = spot.tideReq === "all" || spot.tideReq.includes(forecast.tide.height);
+            const tOk = spot.tideReq === "all" || spot.tideReq.includes(sf.tide.height);
             const tColor = tOk ? "#00d2b4" : "#f5a623";
-            const tStatus = tOk ? `${forecast.tide.height} ✓` : `Best ${spot.tideReq}`;
+            const tStatus = tOk ? `${sf.tide.height} ✓` : `Best ${spot.tideReq}`;
 
             return (
               <div key={spot.id} style={{ marginBottom: 20 }}>
@@ -749,18 +768,19 @@ export default function DailyBrief() {
                   {/* Conditions grid — spot specific */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 6, padding: "0 14px 14px" }}>
                     {[
-                      { l: "SWELL", v: `${forecast.swellHeight}m`, s: sStatus, c: sColor },
-                      { l: "PERIOD", v: `${forecast.swellPeriod}s`, s: forecast.swellDir, c: "#8ab4cc" },
-                      { l: "WIND", v: forecast.wind, s: wStatus, c: wColor },
-                      { l: "TIDE", v: forecast.tide.state === "Rising" ? "↗" : "↘", s: tStatus, c: tColor },
+                      { l: "SWELL", v: `${sf.swellHeight}m`, s: sStatus, c: sColor, sub: `${sf.swellDir}` },
+                      { l: "PERIOD", v: `${sf.swellPeriod}s`, s: sf.swellDir, c: "#8ab4cc", sub: "swell" },
+                      { l: "WIND", v: sf.wind, s: wStatus, c: wColor, sub: `${sf.windSpeed} km/h` },
+                      { l: "TIDE", v: sf.tide.state === "Rising" ? "↗" : "↘", s: tStatus, c: tColor, sub: `H ${sf.tide.nextHigh}` },
                     ].map((m, i) => (
                       <div key={i} style={{
-                        textAlign: "center", borderRadius: 10, padding: "8px 4px",
+                        textAlign: "center", borderRadius: 10, padding: "10px 4px",
                         background: `${m.c}0d`, border: `1px solid ${m.c}20`,
                       }}>
-                        <div style={{ fontSize: 7, color: "#4a6a7a", fontWeight: 700, letterSpacing: "1px", marginBottom: 3 }}>{m.l}</div>
-                        <div style={{ fontSize: 15, fontWeight: 900, color: m.c, lineHeight: 1 }}>{m.v}</div>
-                        <div style={{ fontSize: 8, fontWeight: 700, color: m.c, marginTop: 2, opacity: 0.85 }}>{m.s}</div>
+                        <div style={{ fontSize: 8.5, color: "#4a6a7a", fontWeight: 700, letterSpacing: "1px", marginBottom: 4 }}>{m.l}</div>
+                        <div style={{ fontSize: 19, fontWeight: 900, color: m.c, lineHeight: 1 }}>{m.v}</div>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: m.c, marginTop: 3, opacity: 0.9 }}>{m.s}</div>
+                        <div style={{ fontSize: 9, color: "#5a8ca8", marginTop: 2 }}>{m.sub}</div>
                       </div>
                     ))}
                   </div>
@@ -772,6 +792,14 @@ export default function DailyBrief() {
                       ))}
                     </div>
                   )}
+
+                  {/* Wind + Tide charts — spot-specific */}
+                  <div style={{ padding: "0 10px 8px" }}>
+                    {sf.hourlyWind && sf.hourlyWind.length > 0 && (
+                      <WindChart hourlyWind={sf.hourlyWind} />
+                    )}
+                    <TideChart nextHighStr={sf.tide.nextHigh} tideState={sf.tide.state} />
+                  </div>
 
                   {isOpen && (
                     <div style={{ padding: "14px 18px 18px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
