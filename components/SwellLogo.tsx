@@ -8,31 +8,33 @@ export default function SwellLogo({ size = 38 }: { size?: number }) {
       xmlns="http://www.w3.org/2000/svg"
       style={{ display: "block", flexShrink: 0 }}
     >
-      {/* Background square with rounded corners */}
-      <rect width="40" height="40" rx="10" fill="#060f1a" />
       <rect width="40" height="40" rx="10" fill="url(#bg-grad)" />
 
-      {/* Sine wave 1 — upper */}
+      {/*
+        Both waves: x from 3 to 37 (width=34), 1.5 cycles → 3 half-cycles
+        half-period = 34/3 ≈ 11.33
+        Bézier control offset = 11.33 * 0.36 ≈ 4.1
+        Using S (smooth) for perfect continuity — CP is auto-reflected
+      */}
+
+      {/* Wave 1 — center y=15, amplitude=5 */}
       <path
-        d="M4 17 C7 10, 11 10, 14 17 C17 24, 21 24, 24 17 C27 10, 31 10, 34 17 C37 24, 38 24, 38 21"
+        d="M3,15 C7.1,10 10.2,10 14.3,15 S21.6,20 25.7,15 S32.9,10 37,15"
         stroke="#00d2b4"
-        strokeWidth="2.4"
+        strokeWidth="2.2"
         strokeLinecap="round"
-        strokeLinejoin="round"
         fill="none"
       />
 
-      {/* Sine wave 2 — lower */}
+      {/* Wave 2 — center y=26, amplitude=4, lighter */}
       <path
-        d="M4 25 C7 18, 11 18, 14 25 C17 32, 21 32, 24 25 C27 18, 31 18, 34 25 C37 32, 38 32, 38 29"
+        d="M3,26 C7.1,22 10.2,22 14.3,26 S21.6,30 25.7,26 S32.9,22 37,26"
         stroke="#00d2b4"
-        strokeWidth="1.6"
+        strokeWidth="1.5"
         strokeLinecap="round"
-        strokeLinejoin="round"
         fill="none"
-        opacity="0.45"
+        opacity="0.4"
       />
-
 
       <defs>
         <linearGradient id="bg-grad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
