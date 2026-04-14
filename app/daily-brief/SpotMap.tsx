@@ -20,7 +20,7 @@ export default function SpotMap({ spots }: { spots: ScoredSpot[] }) {
     <div style={{ height: "calc(100vh - 100px)", position: "relative" }}>
       <Map
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
-        initialViewState={{ longitude: 115.18, latitude: -8.72, zoom: 10.5 }}
+        initialViewState={{ longitude: 115.22, latitude: -8.72, zoom: 10.0 }}
         style={{ width: "100%", height: "100%" }}
         mapStyle="mapbox://styles/mapbox/dark-v11"
         onClick={() => setPopupSpot(null)}

@@ -429,6 +429,17 @@ export default function DailyBrief() {
   const [boardPulse, setBoardPulse] = useState(false);
   const [showWhy, setShowWhy] = useState(false);
   const [activeTab, setActiveTab] = useState<"call" | "map">("call");
+
+  // Persist active tab across refreshes
+  useEffect(() => {
+    const saved = localStorage.getItem("swell_tab") as "call" | "map" | null;
+    if (saved === "map" || saved === "call") setActiveTab(saved);
+  }, []);
+
+  const switchTab = (tab: "call" | "map") => {
+    setActiveTab(tab);
+    localStorage.setItem("swell_tab", tab);
+  };
   const [username, setUsername] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [spotForecasts, setSpotForecasts] = useState<Record<string, Forecast>>({});
@@ -544,7 +555,7 @@ export default function DailyBrief() {
           ].map(tab => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as "call" | "map")}
+              onClick={() => switchTab(tab.id as "call" | "map")}
               style={{
                 padding: "10px 18px", fontSize: 12, fontWeight: 700,
                 background: "none", border: "none", cursor: "pointer",
