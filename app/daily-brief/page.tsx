@@ -631,6 +631,14 @@ export default function DailyBrief() {
                   </div>
                 )}
 
+                {/* Wind + Tide charts inside the card */}
+                <div style={{ padding: "0 14px 4px" }}>
+                  {forecast.hourlyWind && forecast.hourlyWind.length > 0 && (
+                    <WindChart hourlyWind={forecast.hourlyWind} />
+                  )}
+                  <TideChart nextHighStr={forecast.tide.nextHigh} tideState={forecast.tide.state} />
+                </div>
+
                 {/* Why button */}
                 <div style={{ padding: "0 22px 22px" }}>
                   <button onClick={() => setShowWhy(v => !v)} style={{
@@ -684,14 +692,6 @@ export default function DailyBrief() {
           </div>
         )}
 
-        {/* Wind chart */}
-        {forecast.hourlyWind && forecast.hourlyWind.length > 0 && (
-          <WindChart hourlyWind={forecast.hourlyWind} />
-        )}
-
-        {/* Tide chart */}
-        <TideChart nextHighStr={forecast.tide.nextHigh} tideState={forecast.tide.state} />
-
         {/* 2nd + 3rd Call */}
         <div id="all-spots-section" style={{ animation: "fadeUp 0.6s ease 0.3s both" }}>
           {[
@@ -699,44 +699,74 @@ export default function DailyBrief() {
             { spot: spots[2], label: "3RD CALL", icon: "◇" },
           ].filter(({ spot }) => !!spot).map(({ spot, label, icon }) => {
             const isOpen = expanded === spot.id;
+
+            // Spot-specific condition interpretation
+            const sOk = forecast.swellHeight >= spot.minSwell && forecast.swellHeight <= spot.maxSwell;
+            const sColor = sOk ? "#00d2b4" : "#f5a623";
+            const sStatus = sOk ? "In range" : forecast.swellHeight < spot.minSwell ? "Too small" : "Too big";
+
+            const wOffshore = forecast.wind === spot.idealWind;
+            const wLight = forecast.windSpeed < 8;
+            const wColor = wOffshore ? "#00d2b4" : wLight ? "#f5a623" : "#ff6b6b";
+            const wStatus = wOffshore ? "Offshore ✓" : wLight ? "Light" : "Onshore";
+
+            const tOk = spot.tideReq === "all" || spot.tideReq.includes(forecast.tide.height);
+            const tColor = tOk ? "#00d2b4" : "#f5a623";
+            const tStatus = tOk ? `${forecast.tide.height} ✓` : `Best ${spot.tideReq}`;
+
             return (
-              <div key={spot.id} style={{ marginBottom: 16 }}>
+              <div key={spot.id} style={{ marginBottom: 20 }}>
                 <div style={{ fontSize: 9.5, fontWeight: 700, color: "#4a6a7a", letterSpacing: "2px", fontFamily: "monospace", marginBottom: 10 }}>
                   {icon} {label}
                 </div>
                 <div
                   onClick={() => setExpanded(isOpen ? null : spot.id)}
                   style={{
-                    background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)",
-                    borderRadius: 18, padding: 20, cursor: "pointer", transition: "all 0.2s",
+                    background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.07)",
+                    borderRadius: 18, overflow: "hidden", cursor: "pointer", transition: "all 0.2s",
                   }}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 28, marginBottom: 8 }}>{spot.img}</div>
-                      <div style={{ fontWeight: 800, fontSize: 20, letterSpacing: "-0.5px", marginBottom: 4 }}>{spot.name}</div>
-                      <div style={{ fontSize: 12, color: "#5a8ca8", marginBottom: 10 }}>{spot.zone} · {spot.type} · {spot.direction}</div>
-                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                        {spot.reasons.map((r, j) => (
-                          <span key={j} style={{ fontSize: 11, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "4px 10px", color: "#8ab4cc" }}>✓ {r}</span>
-                        ))}
-                      </div>
+                  {/* Spot header */}
+                  <div style={{ padding: "18px 18px 12px", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div>
+                      <div style={{ fontSize: 26, marginBottom: 6 }}>{spot.img}</div>
+                      <div style={{ fontWeight: 800, fontSize: 19, letterSpacing: "-0.5px", marginBottom: 3 }}>{spot.name}</div>
+                      <div style={{ fontSize: 11, color: "#5a8ca8" }}>{spot.zone} · {spot.type} · {spot.direction}</div>
                     </div>
-                    <div style={{ textAlign: "center", marginLeft: 16, flexShrink: 0 }}>
+                    <div style={{ textAlign: "center" }}>
                       <div style={{
-                        width: 52, height: 52, borderRadius: "50%",
+                        width: 50, height: 50, borderRadius: "50%",
                         background: spot.score >= 65 ? "rgba(0,210,180,0.08)" : "rgba(245,166,35,0.08)",
                         border: `2px solid ${spot.score >= 65 ? "rgba(0,210,180,0.25)" : "rgba(245,166,35,0.2)"}`,
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 18, fontWeight: 900,
+                        fontSize: 17, fontWeight: 900,
                         color: spot.score >= 65 ? "#00d2b4" : "#f5a623",
                       }}>{spot.score}</div>
-                      <div style={{ fontSize: 8, color: "#4a6a7a", marginTop: 4, fontWeight: 700, letterSpacing: "1px" }}>MATCH</div>
+                      <div style={{ fontSize: 8, color: "#4a6a7a", marginTop: 3, fontWeight: 700, letterSpacing: "1px" }}>MATCH</div>
                     </div>
                   </div>
 
+                  {/* Conditions grid — spot specific */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 6, padding: "0 14px 14px" }}>
+                    {[
+                      { l: "SWELL", v: `${forecast.swellHeight}m`, s: sStatus, c: sColor },
+                      { l: "PERIOD", v: `${forecast.swellPeriod}s`, s: forecast.swellDir, c: "#8ab4cc" },
+                      { l: "WIND", v: forecast.wind, s: wStatus, c: wColor },
+                      { l: "TIDE", v: forecast.tide.state === "Rising" ? "↗" : "↘", s: tStatus, c: tColor },
+                    ].map((m, i) => (
+                      <div key={i} style={{
+                        textAlign: "center", borderRadius: 10, padding: "8px 4px",
+                        background: `${m.c}0d`, border: `1px solid ${m.c}20`,
+                      }}>
+                        <div style={{ fontSize: 7, color: "#4a6a7a", fontWeight: 700, letterSpacing: "1px", marginBottom: 3 }}>{m.l}</div>
+                        <div style={{ fontSize: 15, fontWeight: 900, color: m.c, lineHeight: 1 }}>{m.v}</div>
+                        <div style={{ fontSize: 8, fontWeight: 700, color: m.c, marginTop: 2, opacity: 0.85 }}>{m.s}</div>
+                      </div>
+                    ))}
+                  </div>
+
                   {spot.warnings.length > 0 && (
-                    <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 5 }}>
+                    <div style={{ padding: "0 14px 12px", display: "flex", flexDirection: "column", gap: 4 }}>
                       {spot.warnings.map((w, j) => (
                         <div key={j} style={{ background: "rgba(255,107,107,0.05)", border: "1px solid rgba(255,107,107,0.1)", borderRadius: 8, padding: "6px 12px", fontSize: 11, color: "#ff8a8a" }}>⚠️ {w}</div>
                       ))}
@@ -744,7 +774,7 @@ export default function DailyBrief() {
                   )}
 
                   {isOpen && (
-                    <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+                    <div style={{ padding: "14px 18px 18px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
                       <div style={{ fontSize: 12, color: "#6a9ab8", lineHeight: 1.6, marginBottom: 12 }}>{spot.desc}</div>
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                         <div style={{ background: "rgba(255,255,255,0.02)", borderRadius: 10, padding: "8px 12px" }}>
