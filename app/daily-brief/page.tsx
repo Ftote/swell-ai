@@ -543,31 +543,146 @@ export default function DailyBrief() {
 
       <div style={{ maxWidth: 580, margin: "0 auto", padding: "24px 20px 60px", display: activeTab === "map" ? "none" : "block" }}>
 
-        {/* Conditions bar */}
-        {(() => {
+        {/* ===== TODAY'S CALL ===== */}
+        {top && (() => {
           const energyKj = Math.round(0.49 * Math.pow(forecast.swellHeight, 2) * Math.pow(forecast.swellPeriod, 2));
           const energyDisplay = energyKj >= 1000 ? `${(energyKj / 1000).toFixed(1)}MJ` : `${energyKj}kJ`;
-          const energyLabel = energyKj < 10 ? "Tiny" : energyKj < 50 ? "Small" : energyKj < 150 ? "Medium" : energyKj < 400 ? "Powerful" : "Massive";
+
+          // Interpret conditions for this specific spot
+          const swellOk = forecast.swellHeight >= top.minSwell && forecast.swellHeight <= top.maxSwell;
+          const swellColor = swellOk ? "#00d2b4" : "#f5a623";
+          const swellStatus = swellOk ? "In range" : forecast.swellHeight < top.minSwell ? "Small" : "Big";
+
+          const windOffshore = forecast.wind === top.idealWind;
+          const windLight = forecast.windSpeed < 8;
+          const windColor = windOffshore ? "#00d2b4" : windLight ? "#f5a623" : "#ff6b6b";
+          const windStatus = windOffshore ? "Offshore" : windLight ? "Light" : "Onshore";
+
+          const tideOk = top.tideReq === "all" || top.tideReq.includes(forecast.tide.height);
+          const tideColor = tideOk ? "#00d2b4" : "#f5a623";
+          const tideStatus = tideOk ? "Good" : `Best ${top.tideReq}`;
+
           return (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 5, marginBottom: 28, animation: "fadeUp 0.5s ease" }}>
-              {[
-                { l: "SWELL", v: `${forecast.swellHeight}m`, s: forecast.swellDir },
-                { l: "PERIOD", v: `${forecast.swellPeriod}s`, s: forecast.swellPeriod >= 14 ? "Ground" : forecast.swellPeriod >= 10 ? "Swell" : "Wind" },
-                { l: "ENERGY", v: energyDisplay, s: energyLabel },
-                { l: "WIND", v: forecast.wind, s: `${forecast.windSpeed}km/h` },
-                { l: "TIDE", v: forecast.tide.state === "Rising" ? "↗" : "↘", s: forecast.tide.state },
-                { l: "HIGH", v: forecast.tide.nextHigh, s: "" },
-                { l: "WATER", v: `${forecast.waterTemp}°`, s: "Warm" },
-              ].map((m, i) => (
-                <div key={i} style={{ textAlign: "center", background: i === 2 ? "rgba(0,210,180,0.04)" : "rgba(255,255,255,0.03)", border: `1px solid ${i === 2 ? "rgba(0,210,180,0.12)" : "rgba(255,255,255,0.05)"}`, borderRadius: 12, padding: "10px 3px" }}>
-                  <div style={{ fontSize: 7, color: i === 2 ? "#00d2b4" : "#4a6a7a", fontWeight: 700, letterSpacing: "1px", marginBottom: 4 }}>{m.l}</div>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: i === 2 ? "#00d2b4" : "#dce8f0" }}>{m.v}</div>
-                  <div style={{ fontSize: 8, color: "#5a8ca8", marginTop: 2 }}>{m.s}</div>
+            <div style={{ marginBottom: 28, animation: "fadeUp 0.5s ease" }}>
+              <div style={{ fontSize: 9.5, fontWeight: 700, color: "#00d2b4", letterSpacing: "2px", fontFamily: "monospace", marginBottom: 12 }}>
+                ★ TODAY&apos;S CALL
+              </div>
+
+              {/* Main card */}
+              <div style={{
+                background: "linear-gradient(135deg, rgba(0,210,180,0.08), rgba(0,180,160,0.02))",
+                border: "1px solid rgba(0,210,180,0.22)", borderRadius: 22,
+                overflow: "hidden", position: "relative",
+              }}>
+                {/* BG wave */}
+                <svg style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: "40%", opacity: 0.05, pointerEvents: "none" }} viewBox="0 0 400 120" preserveAspectRatio="none">
+                  <path fill="#00d2b4"><animate attributeName="d" dur="8s" repeatCount="indefinite" values="M0 60C100 30 200 90 400 60V120H0Z;M0 70C120 40 280 80 400 50V120H0Z;M0 60C100 30 200 90 400 60V120H0Z" /></path>
+                </svg>
+
+                {/* Spot identity */}
+                <div style={{ padding: "22px 22px 0", position: "relative", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <div>
+                    <div style={{ fontSize: 32, marginBottom: 6 }}>{top.img}</div>
+                    <h2 style={{ fontSize: 26, fontWeight: 900, letterSpacing: "-0.8px", margin: "0 0 4px" }}>{top.name}</h2>
+                    <div style={{ fontSize: 12, color: "#5a8ca8" }}>{top.zone} · {top.type} · {top.direction}</div>
+                  </div>
+                  <div style={{ textAlign: "center" }}>
+                    <div style={{
+                      width: 60, height: 60, borderRadius: "50%",
+                      background: "rgba(0,210,180,0.1)", border: "2px solid rgba(0,210,180,0.35)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 20, fontWeight: 900, color: "#00d2b4",
+                      animation: "pulse 2s ease infinite",
+                    }}>{top.score}</div>
+                    <div style={{ fontSize: 8, color: "#4a6a7a", marginTop: 4, fontWeight: 700, letterSpacing: "1px" }}>MATCH</div>
+                  </div>
                 </div>
-              ))}
+
+                {/* Conditions for this spot */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, padding: "16px 22px" }}>
+                  {[
+                    { l: "SWELL", v: `${forecast.swellHeight}m`, s: swellStatus, c: swellColor, sub: `${forecast.swellPeriod}s · ${forecast.swellDir}` },
+                    { l: "ENERGY", v: energyDisplay, s: "today", c: "#8ab4cc", sub: `${top.minSwell}–${top.maxSwell}m range` },
+                    { l: "WIND", v: forecast.wind, s: windStatus, c: windColor, sub: `${forecast.windSpeed}km/h` },
+                    { l: "TIDE", v: forecast.tide.state === "Rising" ? "↗" : "↘", s: tideStatus, c: tideColor, sub: `High ${forecast.tide.nextHigh}` },
+                  ].map((m, i) => (
+                    <div key={i} style={{
+                      textAlign: "center", borderRadius: 12, padding: "10px 6px",
+                      background: `${m.c}10`,
+                      border: `1px solid ${m.c}25`,
+                    }}>
+                      <div style={{ fontSize: 7.5, color: "#4a6a7a", fontWeight: 700, letterSpacing: "1px", marginBottom: 4 }}>{m.l}</div>
+                      <div style={{ fontSize: 17, fontWeight: 900, color: m.c, lineHeight: 1 }}>{m.v}</div>
+                      <div style={{ fontSize: 9, fontWeight: 700, color: m.c, marginTop: 3, opacity: 0.9 }}>{m.s}</div>
+                      <div style={{ fontSize: 8, color: "#4a6a7a", marginTop: 2 }}>{m.sub}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Description */}
+                <div style={{ padding: "0 22px 16px", fontSize: 12, color: "#7a9ab8", lineHeight: 1.6 }}>{top.desc}</div>
+
+                {/* Warnings */}
+                {top.warnings.length > 0 && (
+                  <div style={{ padding: "0 22px 16px", display: "flex", flexDirection: "column", gap: 6 }}>
+                    {top.warnings.map((w, i) => (
+                      <div key={i} style={{ background: "rgba(255,107,107,0.06)", border: "1px solid rgba(255,107,107,0.12)", borderRadius: 10, padding: "8px 12px", fontSize: 12, color: "#ff8a8a" }}>⚠️ {w}</div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Why button */}
+                <div style={{ padding: "0 22px 22px" }}>
+                  <button onClick={() => setShowWhy(v => !v)} style={{
+                    width: "100%", padding: "11px 16px",
+                    background: showWhy ? "rgba(0,210,180,0.08)" : "rgba(255,255,255,0.03)",
+                    border: `1px solid ${showWhy ? "rgba(0,210,180,0.25)" : "rgba(255,255,255,0.08)"}`,
+                    borderRadius: 12, cursor: "pointer", fontSize: 12, fontWeight: 600,
+                    color: showWhy ? "#00d2b4" : "#6a9ab8",
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                    transition: "all 0.2s",
+                  }}>
+                    <span>Why we advise you this spot</span>
+                    <span style={{ transition: "transform 0.2s", transform: showWhy ? "rotate(90deg)" : "none" }}>›</span>
+                  </button>
+                  {showWhy && profile && (
+                    <div style={{ marginTop: 8, borderRadius: 14, overflow: "hidden", border: "1px solid rgba(0,210,180,0.1)", background: "rgba(0,0,0,0.2)" }}>
+                      {generateWhyText(top, profile, forecast).map((section, i) => (
+                        <div key={i} style={{ padding: "16px 18px", borderBottom: i < 4 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
+                          <div style={{ fontSize: 9.5, fontWeight: 700, color: "#00d2b4", letterSpacing: "1.5px", fontFamily: "monospace", textTransform: "uppercase" as const, marginBottom: 6 }}>
+                            {["🎯","🌊","💨","🌊","👥"][i]} {section.title}
+                          </div>
+                          <div style={{ fontSize: 12, color: "#8ab4cc", lineHeight: 1.7 }}>{section.body}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           );
         })()}
+
+        {/* Board recommendation */}
+        {boardRec && (
+          <div style={{ marginBottom: 24, animation: "fadeUp 0.6s ease 0.15s both" }}>
+            <div style={{ fontSize: 9.5, fontWeight: 700, color: "#f5a623", letterSpacing: "2px", fontFamily: "monospace", marginBottom: 10 }}>
+              🏄 GRAB THIS BOARD
+            </div>
+            <div style={{
+              background: "rgba(245,166,35,0.06)", border: "1px solid rgba(245,166,35,0.2)",
+              borderRadius: 18, padding: "18px 22px",
+              display: "flex", alignItems: "center", gap: 18,
+              animation: boardPulse ? "boardGlow 2s ease infinite" : "none",
+            }}>
+              <div style={{ fontSize: 40 }}>🏄‍♂️</div>
+              <div>
+                <div style={{ fontWeight: 800, fontSize: 18, color: "#f5a623", marginBottom: 3 }}>{boardRec}</div>
+                <div style={{ fontSize: 12, color: "#c4a864", lineHeight: 1.5 }}>{top?.boardTip}</div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Wind chart */}
         {forecast.hourlyWind && forecast.hourlyWind.length > 0 && (
@@ -576,119 +691,6 @@ export default function DailyBrief() {
 
         {/* Tide chart */}
         <TideChart nextHighStr={forecast.tide.nextHigh} tideState={forecast.tide.state} />
-
-        {/* Hero — Top spot */}
-        {top && (
-          <div style={{ marginBottom: 24, animation: "fadeUp 0.6s ease 0.1s both" }}>
-            <div style={{ fontSize: 9.5, fontWeight: 700, color: "#00d2b4", letterSpacing: "2px", fontFamily: "monospace", marginBottom: 10 }}>
-              ★ TODAY&apos;S CALL
-            </div>
-            <div style={{
-              background: "linear-gradient(135deg, rgba(0,210,180,0.1), rgba(0,180,160,0.03))",
-              border: "1px solid rgba(0,210,180,0.25)", borderRadius: 22, padding: 24,
-              position: "relative", overflow: "hidden",
-            }}>
-              {/* BG wave animation */}
-              <svg style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: "60%", opacity: 0.06, pointerEvents: "none" }} viewBox="0 0 400 120" preserveAspectRatio="none">
-                <path fill="#00d2b4">
-                  <animate attributeName="d" dur="8s" repeatCount="indefinite" values="M0 60C100 30 200 90 400 60V120H0Z;M0 70C120 40 280 80 400 50V120H0Z;M0 60C100 30 200 90 400 60V120H0Z" />
-                </path>
-              </svg>
-
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", position: "relative" }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 36, marginBottom: 8 }}>{top.img}</div>
-                  <h2 style={{ fontSize: 28, fontWeight: 900, letterSpacing: "-1px", margin: "0 0 4px" }}>{top.name}</h2>
-                  <div style={{ fontSize: 12, color: "#5a8ca8", marginBottom: 12 }}>{top.zone} · {top.type} · {top.direction}</div>
-                  <div style={{ fontSize: 13, color: "#8ab4cc", lineHeight: 1.5, marginBottom: 16 }}>{top.desc}</div>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    {top.reasons.map((r, i) => (
-                      <span key={i} style={{ fontSize: 11, background: "rgba(0,210,180,0.08)", border: "1px solid rgba(0,210,180,0.15)", borderRadius: 8, padding: "4px 10px", color: "#00d2b4" }}>✓ {r}</span>
-                    ))}
-                  </div>
-                </div>
-                <div style={{ textAlign: "center", marginLeft: 20, flexShrink: 0 }}>
-                  <div style={{
-                    width: 64, height: 64, borderRadius: "50%",
-                    background: "rgba(0,210,180,0.12)", border: "3px solid rgba(0,210,180,0.35)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 22, fontWeight: 900, color: "#00d2b4",
-                    animation: "pulse 2s ease infinite",
-                  }}>{top.score}</div>
-                  <div style={{ fontSize: 8, color: "#4a6a7a", marginTop: 4, fontWeight: 700, letterSpacing: "1px" }}>MATCH</div>
-                </div>
-              </div>
-
-              {top.warnings.length > 0 && (
-                <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 6 }}>
-                  {top.warnings.map((w, i) => (
-                    <div key={i} style={{ background: "rgba(255,107,107,0.06)", border: "1px solid rgba(255,107,107,0.12)", borderRadius: 10, padding: "8px 12px", fontSize: 12, color: "#ff8a8a" }}>⚠️ {w}</div>
-                  ))}
-                </div>
-              )}
-
-              {/* Why button */}
-              <button
-                onClick={() => setShowWhy(v => !v)}
-                style={{
-                  marginTop: 18, width: "100%", padding: "12px 16px",
-                  background: showWhy ? "rgba(0,210,180,0.08)" : "rgba(255,255,255,0.03)",
-                  border: `1px solid ${showWhy ? "rgba(0,210,180,0.25)" : "rgba(255,255,255,0.08)"}`,
-                  borderRadius: 12, cursor: "pointer", fontSize: 13, fontWeight: 600,
-                  color: showWhy ? "#00d2b4" : "#6a9ab8",
-                  display: "flex", alignItems: "center", justifyContent: "space-between",
-                  transition: "all 0.2s", position: "relative",
-                }}
-              >
-                <span>Why we advise you this spot</span>
-                <span style={{ fontSize: 16, transition: "transform 0.2s", transform: showWhy ? "rotate(180deg)" : "none" }}>›</span>
-              </button>
-
-              {/* Why panel */}
-              {showWhy && profile && (
-                <div style={{ marginTop: 2, borderRadius: 14, overflow: "hidden", border: "1px solid rgba(0,210,180,0.12)", background: "rgba(0,0,0,0.2)" }}>
-                  {generateWhyText(top, profile, forecast).map((section, i) => (
-                    <div key={i} style={{
-                      padding: "18px 20px",
-                      borderBottom: i < 3 ? "1px solid rgba(255,255,255,0.04)" : "none",
-                    }}>
-                      <div style={{
-                        fontSize: 10, fontWeight: 700, color: "#00d2b4", letterSpacing: "1.5px",
-                        fontFamily: "monospace", textTransform: "uppercase", marginBottom: 8,
-                      }}>
-                        {["🎯","🌊","💨","🌊","👥"][i]} {section.title}
-                      </div>
-                      <div style={{ fontSize: 13, color: "#8ab4cc", lineHeight: 1.7 }}>
-                        {section.body}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Board recommendation */}
-        {boardRec && (
-          <div style={{ marginBottom: 28, animation: "fadeUp 0.6s ease 0.2s both" }}>
-            <div style={{ fontSize: 9.5, fontWeight: 700, color: "#f5a623", letterSpacing: "2px", fontFamily: "monospace", marginBottom: 10 }}>
-              🏄 GRAB THIS BOARD
-            </div>
-            <div style={{
-              background: "rgba(245,166,35,0.06)", border: "1px solid rgba(245,166,35,0.2)",
-              borderRadius: 18, padding: "20px 24px",
-              display: "flex", alignItems: "center", gap: 20,
-              animation: boardPulse ? "boardGlow 2s ease infinite" : "none",
-            }}>
-              <div style={{ fontSize: 48 }}>🏄‍♂️</div>
-              <div>
-                <div style={{ fontWeight: 800, fontSize: 20, color: "#f5a623", marginBottom: 4 }}>{boardRec}</div>
-                <div style={{ fontSize: 13, color: "#c4a864", lineHeight: 1.5 }}>{top?.boardTip}</div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* 2nd + 3rd Call */}
         <div id="all-spots-section" style={{ animation: "fadeUp 0.6s ease 0.3s both" }}>
