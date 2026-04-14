@@ -9,19 +9,36 @@ function degreesToCompass(deg: number): string {
   return dirs[Math.round(deg / 45) % 8];
 }
 
-function getTideState(hour: number): { state: string; height: string; nextHigh: string } {
-  // Simple pseudo-tide based on hour (Bali tides roughly semi-diurnal)
-  const cycle = ((hour % 12) / 12) * Math.PI * 2;
-  const tideVal = Math.sin(cycle);
-  const height = tideVal > 0.5 ? "high" : tideVal < -0.5 ? "low" : "mid";
-  const state = tideVal > 0 ? "Rising" : "Falling";
-  const nextHighHour = hour < 6 ? 6 : hour < 18 ? 18 : 30;
-  const hoursUntil = nextHighHour - hour;
-  const nextHighTime = new Date();
-  nextHighTime.setHours(nextHighHour, 0, 0, 0);
-  const nextHigh = hoursUntil <= 0
-    ? "Now"
-    : nextHighTime.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+function getTideState(now: Date): { state: string; height: string; nextHigh: string } {
+  // Semi-diurnal model — same cosine formula as the TideChart component
+  // so state, height and chart curve are always consistent
+  const PERIOD = 745; // 12h25min in minutes
+  const MID = 0.9;
+  const AMP = 0.7;
+  // Bali reference high tide anchor: 06:00
+  const REF_HIGH_MIN = 6 * 60;
+
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+
+  const tideAt = (m: number) => MID + AMP * Math.cos((2 * Math.PI * (m - REF_HIGH_MIN)) / PERIOD);
+  const derivAt = (m: number) => -AMP * (2 * Math.PI / PERIOD) * Math.sin((2 * Math.PI * (m - REF_HIGH_MIN)) / PERIOD);
+
+  const h = tideAt(nowMin);
+  const rising = derivAt(nowMin) > 0;
+  const state = rising ? "Rising" : "Falling";
+  const height = h > MID + AMP * 0.4 ? "high" : h < MID - AMP * 0.4 ? "low" : "mid";
+
+  // Next high = next multiple of PERIOD after nowMin
+  let nextHighMin = REF_HIGH_MIN;
+  while (nextHighMin <= nowMin) nextHighMin += PERIOD;
+  // Clamp to same-day display (wrap if past midnight)
+  const displayMin = nextHighMin % 1440;
+  const nh = Math.floor(displayMin / 60);
+  const nm = Math.round(displayMin % 60);
+  const ampm = nh >= 12 ? "PM" : "AM";
+  const displayH = nh > 12 ? nh - 12 : nh === 0 ? 12 : nh;
+  const nextHigh = `${displayH}:${nm.toString().padStart(2, "0")} ${ampm}`;
+
   return { state, height, nextHigh };
 }
 
@@ -66,7 +83,7 @@ export async function GET() {
     const windSpeedKmh = Math.round(windSpeedMs * 3.6);
     const windDir = degreesToCompass(get("windDirection"));
     const waterTemp = Math.round(get("waterTemperature"));
-    const tide = getTideState(now.getHours());
+    const tide = getTideState(now);
 
     // Build hourly wind data for today (Bali daylight: 6am–18pm)
     const todayStr = now.toISOString().slice(0, 10);
