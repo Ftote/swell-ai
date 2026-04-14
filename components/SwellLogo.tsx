@@ -14,7 +14,7 @@ export default function SwellLogo({ size = 38 }: { size?: number }) {
 
       {/* Sine wave 1 — upper */}
       <path
-        d="M4 17 C7 10, 11 10, 14 17 C17 24, 21 24, 24 17 C27 10, 31 10, 34 17 C35.5 20.5, 36.5 20.5, 38 19"
+        d="M4 17 C7 10, 11 10, 14 17 C17 24, 21 24, 24 17 C27 10, 31 10, 34 17 C37 24, 38 24, 38 21"
         stroke="#00d2b4"
         strokeWidth="2.4"
         strokeLinecap="round"
@@ -22,9 +22,9 @@ export default function SwellLogo({ size = 38 }: { size?: number }) {
         fill="none"
       />
 
-      {/* Sine wave 2 — lower, offset + slightly lighter */}
+      {/* Sine wave 2 — lower */}
       <path
-        d="M4 25 C7 18, 11 18, 14 25 C17 32, 21 32, 24 25 C27 18, 31 18, 34 25 C35.5 28.5, 36.5 28.5, 38 27"
+        d="M4 25 C7 18, 11 18, 14 25 C17 32, 21 32, 24 25 C27 18, 31 18, 34 25 C37 32, 38 32, 38 29"
         stroke="#00d2b4"
         strokeWidth="1.6"
         strokeLinecap="round"
