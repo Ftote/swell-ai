@@ -33,8 +33,6 @@ export default function SwellLogo({ size = 38 }: { size?: number }) {
         opacity="0.45"
       />
 
-      {/* Glow dot */}
-      <circle cx="38" cy="19" r="1.8" fill="#00d2b4" opacity="0.9" />
 
       <defs>
         <linearGradient id="bg-grad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
